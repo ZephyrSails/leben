@@ -1,4 +1,4 @@
-from leben import Leben
+from flight import Flight
 from pflanze import Pflanze
 
 import pygame
