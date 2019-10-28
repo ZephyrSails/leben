@@ -23,8 +23,8 @@ class Leben(pygame.sprite.Sprite):
     def __init__(self):
         super(Leben, self).__init__()
         # motion
-        self.speed = 3
-        self.turn_speed = 3
+        self.speed = 7
+        self.turn_speed = 5
 
         # status
         self.hp_cap = 100
@@ -38,8 +38,8 @@ class Leben(pygame.sprite.Sprite):
         # pisition
         self.x_init = self.radius
         self.y_init = self.radius
-        self.x = self.radius
-        self.y = self.radius
+        self.x = self.x_init
+        self.y = self.y_init
         self.set_direction(0)
 
         # pygame
@@ -50,7 +50,7 @@ class Leben(pygame.sprite.Sprite):
                            self.radius)
         self.draw_mouth()
 
-        self.circle = self.surf.get_rect()
+        self.rect = self.surf.get_rect()
 
     def draw_line(self, radians):
         pygame.draw.line(
@@ -79,13 +79,13 @@ class Leben(pygame.sprite.Sprite):
             dy = int(self.y + self.y_speed) - int(self.y)
             self.x += self.x_speed
             self.y += self.y_speed
-            self.circle.move_ip(dx, dy)
+            self.rect.move_ip(dx, dy)
         if move == Move.B:
             dx = int(self.x - self.x_speed) - int(self.x)
             dy = int(self.y - self.y_speed) - int(self.y)
             self.x -= self.x_speed
             self.y -= self.y_speed
-            self.circle.move_ip(dx, dy)
+            self.rect.move_ip(dx, dy)
         if move == Move.L:
             self.set_direction(self.dir_degree - self.turn_speed)
             # pygame.transform.rotate(self.surf, self.dir_degree)

@@ -1,11 +1,8 @@
 from leben import Leben
+from pflanze import Pflanze
 
 import pygame
 from pygame.locals import (
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
     K_ESCAPE,
     KEYDOWN,
     QUIT,
@@ -22,6 +19,16 @@ def main():
     running = True
 
     leben = Leben()
+    leben_group = pygame.sprite.Group()
+    leben_group.add(leben)
+    pflanzen = pygame.sprite.Group()
+
+    def add_pflanze(pflanzen):
+        pflanze = Pflanze(SCREEN_WIDTH, SCREEN_HEIGHT)
+        pflanzen.add(pflanze)
+
+    for _ in range(28):
+        add_pflanze(pflanzen)
 
     while running:
         for event in pygame.event.get():
@@ -36,7 +43,15 @@ def main():
 
         screen.fill((0, 0, 0))
 
-        screen.blit(leben.surf, leben.circle)
+        screen.blit(leben.surf, leben.rect)
+
+        for pflanze in pflanzen:
+            screen.blit(pflanze.surf, pflanze.rect)
+
+        collide_group = pygame.sprite.groupcollide(leben_group, pflanzen,
+                                                   False, True)
+        for _ in range(len(collide_group)):
+            add_pflanze(pflanzen)
 
         pygame.display.flip()
 
