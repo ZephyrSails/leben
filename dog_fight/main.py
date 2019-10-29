@@ -2,7 +2,13 @@ from flight import Flight
 from bullet import Bullet
 
 import pygame
-from pygame.locals import (K_ESCAPE, KEYDOWN, QUIT, K_RSHIFT)
+from pygame.locals import (K_ESCAPE, KEYDOWN, QUIT, K_UP, K_RSHIFT, K_LEFT,
+                           K_RIGHT, K_w, K_a, K_d, K_LSHIFT)
+import random
+
+KEY_SETS = [[K_UP, K_RSHIFT, K_LEFT, K_RIGHT], [K_w, K_LSHIFT, K_a, K_d]]
+
+COLOR_SETS = [(200, 25, 50), (25, 200, 50)]
 
 
 def main():
@@ -14,9 +20,12 @@ def main():
 
     running = True
 
-    flight = Flight(SCREEN_WIDTH, SCREEN_HEIGHT)
+    flights = pygame.sprite.Group()
 
-    bullets = pygame.sprite.Group()
+    scores = []
+    for idx in range(2):
+        flights.add(Flight(idx, screen, KEY_SETS[idx], COLOR_SETS[idx]))
+        scores.append(0)
 
     while running:
         for event in pygame.event.get():
@@ -27,21 +36,22 @@ def main():
                 running = False
 
         pressed_keys = pygame.key.get_pressed()
-        flight.update(pressed_keys)
-
-        bullets.update()
-
-        if pressed_keys[K_RSHIFT]:
-            bullets.add(
-                Bullet(flight.x, flight.y, flight.dir_radians, SCREEN_WIDTH,
-                       SCREEN_HEIGHT))
-            print("fire:", len(bullets))
 
         screen.fill((0, 0, 0))
 
-        screen.blit(flight.surf, flight.rect)
-        for bullet in bullets:
-            screen.blit(bullet.surf, bullet.rect)
+        # for flight in flights:
+        flights.update(pressed_keys)
+
+        for idx, flight in enumerate(flights):
+            hostile_bullets = pygame.sprite.Group()
+            for hostile_idx, hostile_flight in enumerate(flights):
+                if hostile_idx != idx:
+                    hostile_bullets.add(*hostile_flight.bullets)
+            flight_group = pygame.sprite.Group([flight])
+            collide_group = pygame.sprite.groupcollide(
+                flight_group, hostile_bullets, False, True)
+            scores[idx] -= len(collide_group)
+        print(scores)
 
         pygame.display.flip()
 

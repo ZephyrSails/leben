@@ -3,26 +3,29 @@ import math
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, radians, SCREEN_WIDTH, SCREEN_HEIGHT):
+    def __init__(self, flight):
         super(Bullet, self).__init__()
+        # identity
+        self.id = flight.id
+
         # environment
-        self.SCREEN_WIDTH = SCREEN_WIDTH
-        self.SCREEN_HEIGHT = SCREEN_HEIGHT
+        self.SCREEN_WIDTH = flight.SCREEN_WIDTH
+        self.SCREEN_HEIGHT = flight.SCREEN_HEIGHT
 
         # motion
         self.speed_multiplier = 4
-        self.radians = radians
-        self.x_speed = math.cos(radians) * self.speed_multiplier
-        self.y_speed = math.sin(radians) * self.speed_multiplier
+        self.radians = flight.dir_radians
+        self.x_speed = math.cos(self.radians) * self.speed_multiplier
+        self.y_speed = math.sin(self.radians) * self.speed_multiplier
 
         # attribute
         self.len = 2
-        self.bg_color = (255, 255, 255)
-        self.color = (0, 0, 0)
+        self.bg_color = flight.bg_color
+        self.color = flight.color
 
         # pisition
-        self.x = x
-        self.y = y
+        self.x = flight.x
+        self.y = flight.y
 
         self.surf = pygame.Surface((self.len * 2, self.len * 2))
         self.redraw()

@@ -2,15 +2,13 @@ import pygame
 import math
 from enum import Enum
 from pygame.locals import (
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
     K_ESCAPE,
     K_RSHIFT,
     KEYDOWN,
     QUIT,
 )
+import random
+from bullet import Bullet
 
 
 class Move(Enum):
@@ -21,11 +19,17 @@ class Move(Enum):
 
 
 class Flight(pygame.sprite.Sprite):
-    def __init__(self, SCREEN_WIDTH, SCREEN_HEIGHT):
+    def __init__(self, id, screen, keySet, color):
         super(Flight, self).__init__()
+        # identity
+        self.id = id
+
         # environment
-        self.SCREEN_WIDTH = SCREEN_WIDTH
-        self.SCREEN_HEIGHT = SCREEN_HEIGHT
+        self.screen = screen
+        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.screen.get_size()
+
+        # control
+        self.kWarp, self.kFire, self.kLeft, self.kRight = keySet
 
         # motion
         self.speed = 2
@@ -37,33 +41,43 @@ class Flight(pygame.sprite.Sprite):
         self.hp = 80
 
         # attribute
+        self.color = color
+        self.bg_color = (0, 0, 0)
         self.radius = 10  # pixel
         self.view_angle = 90  # degree
         self.mouth_degree = 45
 
         # pisition
-        self.x = self.radius
-        self.y = self.radius
+        self.x = random.randint(0, self.SCREEN_WIDTH)
+        self.y = random.randint(0, self.SCREEN_HEIGHT)
         self.set_direction(0)
 
         # pygame
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
 
-        pygame.draw.circle(self.surf, (255, 255, 255), (self.x, self.y),
+        pygame.draw.circle(self.surf, self.color, (self.x, self.y),
                            self.radius)
         self.draw_mouth()
 
-        self.rect = self.surf.get_rect()
+        self.rect = self.surf.get_rect(center=(
+            self.x,
+            self.y,
+        ))
+
+        # projectile
+        self.bullet_limit = 100
+        self.bullet_list = []
+        self.bullets = pygame.sprite.Group()
 
     def draw_line(self, radians):
         pygame.draw.line(
-            self.surf, (0, 0, 0), (int(self.radius), int(self.radius)),
+            self.surf, self.bg_color, (int(self.radius), int(self.radius)),
             (int(self.radius + self.radius * math.cos(radians)),
              int(self.radius + self.radius * math.sin(radians))), 2)
 
     def draw_mouth(self):
-        pygame.draw.circle(self.surf, (255, 255, 255),
-                           (self.radius, self.radius), self.radius)
+        pygame.draw.circle(self.surf, self.color, (self.radius, self.radius),
+                           self.radius)
         self.draw_line(self.dir_radians)
         self.draw_line(self.dir_l_radians)
         self.draw_line(self.dir_r_radians)
@@ -87,8 +101,6 @@ class Flight(pygame.sprite.Sprite):
             self.x += self.x_warp_speed
             self.y += self.y_warp_speed
             self.rect.move_ip(dx, dy)
-        if move == Move.F:
-            print('fire')
         if move == Move.L:
             self.set_direction(self.dir_degree - self.turn_speed)
             self.draw_mouth()
@@ -116,17 +128,27 @@ class Flight(pygame.sprite.Sprite):
                                                 self.dir_degree))
 
     def update(self, pressed_keys):
-        if pressed_keys[K_UP]:
+        if pressed_keys[self.kWarp]:
             self.move(Move.W)
-            self.print()
-        if pressed_keys[K_RSHIFT]:
+        if pressed_keys[self.kFire]:
             self.move(Move.F)
-            self.print()
-        if pressed_keys[K_LEFT]:
+        if pressed_keys[self.kLeft]:
             self.move(Move.L)
-            self.print()
-        if pressed_keys[K_RIGHT]:
+        if pressed_keys[self.kRight]:
             self.move(Move.R)
-            self.print()
         self.move(None)
-        self.print()
+
+        if pressed_keys[self.kFire]:
+            self.bullet_list.append(Bullet(self))
+            self.bullets.add(self.bullet_list[-1])
+            if len(self.bullets) > self.bullet_limit:
+                oldest_bullet = self.bullet_list.pop(0)
+                oldest_bullet.kill()
+
+        self.bullets.update()
+        for bullet in self.bullets:
+            self.screen.blit(bullet.surf, bullet.rect)
+
+        self.screen.blit(self.surf, self.rect)
+
+        # self.print()
