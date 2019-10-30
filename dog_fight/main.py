@@ -51,7 +51,7 @@ def main():
             collide_group = pygame.sprite.groupcollide(
                 flight_group, hostile_bullets, False, True)
             scores[idx] -= len(collide_group)
-        print(scores)
+        print('\r{}'.format(scores), end="")
 
         pygame.display.flip()
 

@@ -60,3 +60,6 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.bottom >= self.SCREEN_HEIGHT:
             self.rect.bottom -= self.SCREEN_HEIGHT
         # self.redraw()
+
+    def blit(self, screen):
+        screen.blit(self.surf, self.rect)

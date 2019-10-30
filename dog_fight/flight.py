@@ -44,6 +44,7 @@ class Flight(pygame.sprite.Sprite):
         # attribute
         self.color = color
         self.bg_color = (0, 0, 0)
+        self.line_color = (1, 1, 1)
         self.radius = 10  # pixel
         self.view_angle = 90  # degree
         self.mouth_degree = 45
@@ -55,7 +56,7 @@ class Flight(pygame.sprite.Sprite):
 
         # pygame
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
-
+        self.surf.set_colorkey(self.bg_color)
         pygame.draw.circle(self.surf, self.color, (self.x, self.y),
                            self.radius)
         self.draw_mouth()
@@ -75,7 +76,7 @@ class Flight(pygame.sprite.Sprite):
 
     def draw_line(self, radians):
         pygame.draw.line(
-            self.surf, self.bg_color, (int(self.radius), int(self.radius)),
+            self.surf, self.line_color, (int(self.radius), int(self.radius)),
             (int(self.radius + self.radius * math.cos(radians)),
              int(self.radius + self.radius * math.sin(radians))), 2)
 
@@ -119,12 +120,16 @@ class Flight(pygame.sprite.Sprite):
             self.rect.move_ip(dx, dy)
 
         if self.rect.left < 0:
+            self.x += self.SCREEN_WIDTH
             self.rect.left += self.SCREEN_WIDTH
         if self.rect.right > self.SCREEN_WIDTH:
+            self.x -= self.SCREEN_WIDTH
             self.rect.right -= self.SCREEN_WIDTH
         if self.rect.top <= 0:
+            self.y += self.SCREEN_HEIGHT
             self.rect.top += self.SCREEN_HEIGHT
         if self.rect.bottom >= self.SCREEN_HEIGHT:
+            self.y -= self.SCREEN_HEIGHT
             self.rect.bottom -= self.SCREEN_HEIGHT
 
     def print(self):
