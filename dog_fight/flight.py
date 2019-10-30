@@ -9,6 +9,7 @@ from pygame.locals import (
 )
 import random
 from bullet import Bullet
+from contrail import Contrail
 
 
 class Move(Enum):
@@ -68,6 +69,9 @@ class Flight(pygame.sprite.Sprite):
         self.bullet_limit = 100
         self.bullet_list = []
         self.bullets = pygame.sprite.Group()
+
+        # decorator
+        self.contrails = pygame.sprite.Group()
 
     def draw_line(self, radians):
         pygame.draw.line(
@@ -148,6 +152,11 @@ class Flight(pygame.sprite.Sprite):
         self.bullets.update()
         for bullet in self.bullets:
             self.screen.blit(bullet.surf, bullet.rect)
+
+        self.contrails.add(Contrail(self))
+        self.contrails.update()
+        for contrail in self.contrails:
+            self.screen.blit(contrail.surf, contrail.rect)
 
         self.screen.blit(self.surf, self.rect)
 
