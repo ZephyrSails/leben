@@ -12,13 +12,6 @@ from bullet import Bullet
 from contrail import Contrail
 
 
-class Move(Enum):
-    W = 0  # warp forward
-    F = 1  # fire
-    L = 2  # turn left
-    R = 3  # turn right
-
-
 class Flight(pygame.sprite.Sprite):
     def __init__(self, id, screen, keySet, color):
         super(Flight, self).__init__()
@@ -52,19 +45,16 @@ class Flight(pygame.sprite.Sprite):
         # pisition
         self.x = random.randint(0, self.SCREEN_WIDTH)
         self.y = random.randint(0, self.SCREEN_HEIGHT)
-        self.set_direction(0)
 
         # pygame
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
         self.surf.set_colorkey(self.bg_color)
-        pygame.draw.circle(self.surf, self.color, (self.x, self.y),
-                           self.radius)
-        self.draw_mouth()
 
         self.rect = self.surf.get_rect(center=(
-            self.x,
-            self.y,
+            int(self.x),
+            int(self.y),
         ))
+        self.set_direction(0)
 
         # projectile
         self.bullet_limit = 100
@@ -98,55 +88,41 @@ class Flight(pygame.sprite.Sprite):
         self.y_speed = self.speed * sin
         self.x_warp_speed = self.warp_speed * cos
         self.y_warp_speed = self.warp_speed * sin
+        self.draw_mouth()
 
-    def move(self, move):
-        if move == Move.W:
+    def update(self, pressed_keys):
+        # flight motion
+        if pressed_keys[self.kWarp]:
             dx = int(self.x + self.x_warp_speed) - int(self.x)
             dy = int(self.y + self.y_warp_speed) - int(self.y)
             self.x += self.x_warp_speed
             self.y += self.y_warp_speed
             self.rect.move_ip(dx, dy)
-        if move == Move.L:
-            self.set_direction(self.dir_degree - self.turn_speed)
-            self.draw_mouth()
-        if move == Move.R:
-            self.set_direction(self.dir_degree + self.turn_speed)
-            self.draw_mouth()
-        if move == None:
-            dx = int(self.x + self.x_speed) - int(self.x)
-            dy = int(self.y + self.y_speed) - int(self.y)
-            self.x += self.x_speed
-            self.y += self.y_speed
-            self.rect.move_ip(dx, dy)
-
-        if self.rect.left < 0:
-            self.x += self.SCREEN_WIDTH
-            self.rect.left += self.SCREEN_WIDTH
-        if self.rect.right > self.SCREEN_WIDTH:
-            self.x -= self.SCREEN_WIDTH
-            self.rect.right -= self.SCREEN_WIDTH
-        if self.rect.top <= 0:
-            self.y += self.SCREEN_HEIGHT
-            self.rect.top += self.SCREEN_HEIGHT
-        if self.rect.bottom >= self.SCREEN_HEIGHT:
-            self.y -= self.SCREEN_HEIGHT
-            self.rect.bottom -= self.SCREEN_HEIGHT
-
-    def print(self):
-        print("[{:.2f}, {:.2f}, {:.2f}]".format(self.x, self.y,
-                                                self.dir_degree))
-
-    def update(self, pressed_keys):
-        if pressed_keys[self.kWarp]:
-            self.move(Move.W)
-        if pressed_keys[self.kFire]:
-            self.move(Move.F)
         if pressed_keys[self.kLeft]:
-            self.move(Move.L)
+            self.set_direction(self.dir_degree - self.turn_speed)
         if pressed_keys[self.kRight]:
-            self.move(Move.R)
-        self.move(None)
+            self.set_direction(self.dir_degree + self.turn_speed)
 
+        dx = int(self.x + self.x_speed) - int(self.x)
+        dy = int(self.y + self.y_speed) - int(self.y)
+        self.x += self.x_speed
+        self.y += self.y_speed
+        self.rect.move_ip(dx, dy)
+
+        if self.x < 0:
+            self.rect.move_ip(self.SCREEN_WIDTH, 0)
+            self.x = self.rect.left + self.radius
+        if self.x > self.SCREEN_WIDTH:
+            self.rect.move_ip(-self.SCREEN_WIDTH, 0)
+            self.x = self.rect.left + self.radius
+        if self.y <= 0:
+            self.rect.move_ip(0, self.SCREEN_HEIGHT)
+            self.y = self.rect.top + self.radius
+        if self.y >= self.SCREEN_HEIGHT:
+            self.rect.move_ip(0, -self.SCREEN_HEIGHT)
+            self.y = self.rect.top + self.radius
+
+        # fire
         if pressed_keys[self.kFire]:
             self.bullet_list.append(Bullet(self))
             self.bullets.add(self.bullet_list[-1])
@@ -158,11 +134,10 @@ class Flight(pygame.sprite.Sprite):
         for bullet in self.bullets:
             self.screen.blit(bullet.surf, bullet.rect)
 
+        # contrails
         self.contrails.add(Contrail(self))
         self.contrails.update()
         for contrail in self.contrails:
             self.screen.blit(contrail.surf, contrail.rect)
 
         self.screen.blit(self.surf, self.rect)
-
-        # self.print()
