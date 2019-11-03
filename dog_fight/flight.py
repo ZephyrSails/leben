@@ -75,7 +75,11 @@ class Flight(pygame.sprite.Sprite):
         # decorator
         self.contrails = pygame.sprite.Group()
 
+        # groups
         self.flights = flights
+
+        # draw
+        self.draw_mouth()
 
     def draw_line(self, radians):
         pygame.draw.line(

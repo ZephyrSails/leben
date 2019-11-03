@@ -42,7 +42,7 @@ class Missile(pygame.sprite.Sprite):
         self.y = flight.y
 
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
-        self.redraw()
+        self.draw()
         self.rect = self.surf.get_rect(center=(
             self.x,
             self.y,
@@ -54,7 +54,7 @@ class Missile(pygame.sprite.Sprite):
         # timing
         self.life_tick = 500
 
-    def redraw(self):
+    def draw(self):
         pygame.draw.circle(self.surf, self.color, (self.radius, self.radius),
                            self.radius)
 

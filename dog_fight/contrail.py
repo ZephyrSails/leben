@@ -39,10 +39,10 @@ class Contrail(pygame.sprite.Sprite):
             int(self.y),
         ))
 
-    def redraw(self):
-        pygame.draw.circle(self.surf, self.bg_color,
-                           (self.init_radius, self.init_radius),
-                           self.init_radius)
+        # draw
+        self.draw()
+
+    def draw(self):
         pygame.draw.circle(self.surf, self.color,
                            (self.init_radius, self.init_radius),
                            int(self.radius))
@@ -51,9 +51,10 @@ class Contrail(pygame.sprite.Sprite):
         self.curr_life_tick -= 1
         if self.curr_life_tick == 0:
             self.kill()
-        self.redraw()
-        ratio = self.curr_life_tick / self.init_life_tick
 
         self.radius -= self.radius_decay
         self.alpha -= self.alpha_decay
         self.surf.set_alpha(int(self.alpha))
+
+        self.surf = pygame.transform.scale(
+            self.surf, (int(self.radius * 2), int(self.radius * 2)))

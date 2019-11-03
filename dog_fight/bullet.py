@@ -31,7 +31,7 @@ class Bullet(pygame.sprite.Sprite):
 
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
         self.surf.set_colorkey(self.bg_color)
-        self.redraw()
+        self.draw()
         self.rect = self.surf.get_rect(center=(
             int(self.x),
             int(self.y),
@@ -43,7 +43,7 @@ class Bullet(pygame.sprite.Sprite):
         # explosion visual
         self.to_be_killed_in_n_turn = -1
 
-    def redraw(self):
+    def draw(self):
         pygame.draw.circle(self.surf, self.bg_color,
                            (self.radius, self.radius), self.len)
         pygame.draw.line(
