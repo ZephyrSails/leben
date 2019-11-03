@@ -19,17 +19,18 @@ class Bullet(pygame.sprite.Sprite):
         self.y_speed = math.sin(self.radians) * self.speed_multiplier
 
         # attribute
-        self.len = 2
+        self.radius = 2
         self.bg_color = flight.bg_color
         self.color = flight.color
-        self.explode_range = 5
-        self.radius = max(self.explode_range, self.len)
+        self.explosion_radius = 5
+        self.bound_radius = max(self.explosion_radius, self.radius)
 
         # pisition
         self.x = flight.x
         self.y = flight.y
 
-        self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
+        self.surf = pygame.Surface((self.bound_radius * 2,
+                                    self.bound_radius * 2))
         self.surf.set_colorkey(self.bg_color)
         self.draw()
         self.rect = self.surf.get_rect(center=(
@@ -45,13 +46,13 @@ class Bullet(pygame.sprite.Sprite):
 
     def draw(self):
         pygame.draw.circle(self.surf, self.bg_color,
-                           (self.radius, self.radius), self.len)
+                           (self.bound_radius, self.bound_radius), self.radius)
         pygame.draw.line(
             self.surf, self.color,
-            (int(self.radius - self.len * math.cos(self.radians)),
-             int(self.radius - self.len * math.sin(self.radians))),
-            (int(self.radius + self.len * math.cos(self.radians)),
-             int(self.radius + self.len * math.sin(self.radians))), 1)
+            (int(self.bound_radius - self.radius * math.cos(self.radians)),
+             int(self.bound_radius - self.radius * math.sin(self.radians))),
+            (int(self.bound_radius + self.radius * math.cos(self.radians)),
+             int(self.bound_radius + self.radius * math.sin(self.radians))), 1)
 
     def update(self):
         if self.to_be_killed_in_n_turn != -1:
@@ -59,7 +60,8 @@ class Bullet(pygame.sprite.Sprite):
                 super(Bullet, self).kill()
                 return
             pygame.draw.circle(self.surf, self.color,
-                               (self.radius, self.radius), self.explode_range)
+                               (self.bound_radius, self.bound_radius),
+                               self.explosion_radius)
             self.to_be_killed_in_n_turn -= 1
         else:
             dx = int(self.x + self.x_speed) - int(self.x)

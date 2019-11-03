@@ -3,28 +3,28 @@ import math
 
 
 class Contrail(pygame.sprite.Sprite):
-    def __init__(self, flight):
+    def __init__(self, parent):
         super(Contrail, self).__init__()
         # identity
-        self.id = flight.id
+        self.id = parent.id
 
         # environment
-        self.SCREEN_WIDTH = flight.SCREEN_WIDTH
-        self.SCREEN_HEIGHT = flight.SCREEN_HEIGHT
+        self.SCREEN_WIDTH = parent.SCREEN_WIDTH
+        self.SCREEN_HEIGHT = parent.SCREEN_HEIGHT
 
         # pisition
-        self.x = flight.x
-        self.y = flight.y
+        self.x = parent.x
+        self.y = parent.y
 
         # attribute
-        self.init_radius = flight.radius
+        self.init_radius = parent.radius
         self.radius = self.init_radius
-        self.bg_color = flight.bg_color
-        self.color = pygame.Color(*flight.color)
-        self.alpha = self.color.a // 2
+        self.bg_color = parent.bg_color
+        self.color = pygame.Color(*parent.color)
+        self.alpha = self.color.a // 4
 
         # life span
-        self.init_life_tick = 50
+        self.init_life_tick = parent.contrail_tick
         self.curr_life_tick = self.init_life_tick
 
         # decays
@@ -58,3 +58,7 @@ class Contrail(pygame.sprite.Sprite):
 
         self.surf = pygame.transform.scale(
             self.surf, (int(self.radius * 2), int(self.radius * 2)))
+        self.rect = self.surf.get_rect(center=(
+            int(self.x),
+            int(self.y),
+        ))

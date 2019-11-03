@@ -21,6 +21,7 @@ class Flight(pygame.sprite.Sprite):
             screen: pygame.Screen
             keySet: List<pygame.locals>
             color: pygame.Color
+            flights: pygame.sprite.Group<Flight>
         """
 
         super(Flight, self).__init__()
@@ -73,6 +74,7 @@ class Flight(pygame.sprite.Sprite):
         self.missiles = pygame.sprite.Group()
 
         # decorator
+        self.contrail_tick = 100
         self.contrails = pygame.sprite.Group()
 
         # groups
@@ -153,8 +155,9 @@ class Flight(pygame.sprite.Sprite):
         # missile
         if pressed_keys[self.kMissile]:
             if (len(self.missiles) == 0):
-                self.missiles.add(Missile(self, 90, self.flights))
-                self.missiles.add(Missile(self, -90, self.flights))
+                for degree_delta in range(-60, 61, 15):
+                    self.missiles.add(
+                        Missile(self, degree_delta, self.flights))
 
         # draw & blit
         self.update_and_blit(self.contrails)

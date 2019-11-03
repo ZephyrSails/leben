@@ -1,5 +1,12 @@
 import pygame
 import math
+from enum import Enum
+from contrail import Contrail
+
+
+class MissileStatus(Enum):
+    Tracking = 1,
+    Detonated = 2,
 
 
 class Missile(pygame.sprite.Sprite):
@@ -11,37 +18,45 @@ class Missile(pygame.sprite.Sprite):
             targets: pygame.sprite.Group
         """
         super(Missile, self).__init__()
+        self.flight = flight
+
         # identity
-        self.id = flight.id
+        self.id = self.flight.id
 
         # environment
-        self.SCREEN_WIDTH = flight.SCREEN_WIDTH
-        self.SCREEN_HEIGHT = flight.SCREEN_HEIGHT
+        self.SCREEN_WIDTH = self.flight.SCREEN_WIDTH
+        self.SCREEN_HEIGHT = self.flight.SCREEN_HEIGHT
 
         # motion
-        self.max_a = 0.1
+        self.max_a = 0.2
         self.curr_a = 0
-        self.inc_a = 0.0001
-        self.max_speed = 4
+        self.inc_a = 0.002
+        self.max_speed = 5
         self.x_a = 0
         self.y_a = 0
-        self.radians = math.radians(flight.dir_degree + degree_delta)
+        self.radians = math.radians(self.flight.dir_degree + degree_delta)
+
         self.x_speed = math.cos(
-            self.radians) * flight.x_speed * self.max_speed / flight.speed
+            self.radians) * self.max_speed / self.flight.speed
         self.y_speed = math.sin(
-            self.radians) * flight.y_speed * self.max_speed / flight.speed
+            self.radians) * self.max_speed / self.flight.speed
+        print(self.radians, self.flight.dir_degree)
 
         # attribute
         self.life_tick = 500
         self.radius = 3
-        self.bg_color = flight.bg_color
-        self.color = flight.color
+        self.explosion_radius = 7
+        self.bound_radius = max(self.explosion_radius, self.radius)
+        self.bg_color = self.flight.bg_color
+        self.color = self.flight.color
 
         # position
-        self.x = flight.x
-        self.y = flight.y
+        self.x = self.flight.x
+        self.y = self.flight.y
 
-        self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
+        self.surf = pygame.Surface((self.bound_radius * 2,
+                                    self.bound_radius * 2))
+        self.surf.set_colorkey(self.bg_color)
         self.draw()
         self.rect = self.surf.get_rect(center=(
             self.x,
@@ -52,11 +67,17 @@ class Missile(pygame.sprite.Sprite):
         self.targets = targets
 
         # timing
+        self.status = MissileStatus.Tracking
         self.life_tick = 500
+        self.detonation_tick = 50
+
+        # decorator
+        self.contrail_tick = self.detonation_tick
+        self.contrails = pygame.sprite.Group()
 
     def draw(self):
-        pygame.draw.circle(self.surf, self.color, (self.radius, self.radius),
-                           self.radius)
+        pygame.draw.circle(self.surf, self.color,
+                           (self.bound_radius, self.bound_radius), self.radius)
 
     def updateAcceleration(self):
 
@@ -90,20 +111,41 @@ class Missile(pygame.sprite.Sprite):
         self.y_a = d_y * self.curr_a / min_dist
         return min_dist_target
 
+    def detonate(self):
+        self.status = MissileStatus.Detonated
+        pygame.draw.circle(self.surf, self.color,
+                           (self.bound_radius, self.bound_radius),
+                           self.explosion_radius)
+
     def update(self):
-        min_dist_target = self.updateAcceleration()
-        if min_dist_target == None:
-            return
-        self.x_speed += self.x_a
-        self.y_speed += self.y_a
+        if self.status == MissileStatus.Tracking:
+            min_dist_target = self.updateAcceleration()
+            if min_dist_target == None:
+                return
+            self.x_speed += self.x_a
+            self.y_speed += self.y_a
 
-        mag_speed = math.sqrt(((self.x_speed)**2 + (self.y_speed)**2))
-        if mag_speed > self.max_speed:
-            self.x_speed *= self.max_speed / mag_speed
-            self.y_speed *= self.max_speed / mag_speed
+            mag_speed = math.sqrt(((self.x_speed)**2 + (self.y_speed)**2))
+            if mag_speed > self.max_speed:
+                self.x_speed *= self.max_speed / mag_speed
+                self.y_speed *= self.max_speed / mag_speed
 
-        dx = int(self.x + self.x_speed) - int(self.x)
-        dy = int(self.y + self.y_speed) - int(self.y)
-        self.x += self.x_speed
-        self.y += self.y_speed
-        self.rect.move_ip(dx, dy)
+            dx = int(self.x + self.x_speed) - int(self.x)
+            dy = int(self.y + self.y_speed) - int(self.y)
+
+            self.x += self.x_speed
+            self.y += self.y_speed
+            self.rect.move_ip(dx, dy)
+
+            self.life_tick -= 1
+            if self.life_tick == 0 or pygame.sprite.collide_circle(
+                    self, min_dist_target):
+                self.detonate()
+
+            # contrails
+            self.contrails.add(Contrail(self))
+            self.flight.update_and_blit(self.contrails)
+        if self.status == MissileStatus.Detonated:
+            self.detonation_tick -= 1
+            if self.detonation_tick == 0:
+                self.kill()
