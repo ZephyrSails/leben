@@ -21,11 +21,15 @@ class Contrail(pygame.sprite.Sprite):
         self.radius = self.init_radius
         self.bg_color = flight.bg_color
         self.color = pygame.Color(*flight.color)
-        self.init_alpha = self.color.a // 2
+        self.alpha = self.color.a // 2
 
         # life span
         self.init_life_tick = 50
         self.curr_life_tick = self.init_life_tick
+
+        # decays
+        self.radius_decay = self.init_radius / self.init_life_tick
+        self.alpha_decay = self.alpha / self.init_life_tick
 
         # pygame
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
@@ -37,10 +41,11 @@ class Contrail(pygame.sprite.Sprite):
 
     def redraw(self):
         pygame.draw.circle(self.surf, self.bg_color,
-                          (self.init_radius, self.init_radius),
-                          self.init_radius)
+                           (self.init_radius, self.init_radius),
+                           self.init_radius)
         pygame.draw.circle(self.surf, self.color,
-                           (self.init_radius, self.init_radius), self.radius)
+                           (self.init_radius, self.init_radius),
+                           int(self.radius))
 
     def update(self):
         self.curr_life_tick -= 1
@@ -49,5 +54,6 @@ class Contrail(pygame.sprite.Sprite):
         self.redraw()
         ratio = self.curr_life_tick / self.init_life_tick
 
-        self.radius = int(self.init_radius * ratio)
-        self.surf.set_alpha(int(self.init_alpha * ratio))
+        self.radius -= self.radius_decay
+        self.alpha -= self.alpha_decay
+        self.surf.set_alpha(int(self.alpha))

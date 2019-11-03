@@ -10,10 +10,19 @@ from pygame.locals import (
 import random
 from bullet import Bullet
 from contrail import Contrail
+from missile import Missile
 
 
 class Flight(pygame.sprite.Sprite):
-    def __init__(self, id, screen, keySet, color):
+    def __init__(self, id, screen, keySet, color, flights):
+        """
+        Input:
+            id: Int
+            screen: pygame.Screen
+            keySet: List<pygame.locals>
+            color: pygame.Color
+        """
+
         super(Flight, self).__init__()
         # identity
         self.id = id
@@ -23,7 +32,7 @@ class Flight(pygame.sprite.Sprite):
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.screen.get_size()
 
         # control
-        self.kWarp, self.kFire, self.kLeft, self.kRight = keySet
+        self.kWarp, self.kFire, self.kLeft, self.kRight, self.kMissile = keySet
 
         # motion
         self.speed = 2
@@ -61,8 +70,12 @@ class Flight(pygame.sprite.Sprite):
         self.bullet_list = []
         self.bullets = pygame.sprite.Group()
 
+        self.missiles = pygame.sprite.Group()
+
         # decorator
         self.contrails = pygame.sprite.Group()
+
+        self.flights = flights
 
     def draw_line(self, radians):
         pygame.draw.line(
@@ -130,14 +143,22 @@ class Flight(pygame.sprite.Sprite):
                 oldest_bullet = self.bullet_list.pop(0)
                 oldest_bullet.kill()
 
-        self.bullets.update()
-        for bullet in self.bullets:
-            self.screen.blit(bullet.surf, bullet.rect)
-
         # contrails
         self.contrails.add(Contrail(self))
-        self.contrails.update()
-        for contrail in self.contrails:
-            self.screen.blit(contrail.surf, contrail.rect)
 
+        # missile
+        if pressed_keys[self.kMissile]:
+            if (len(self.missiles) == 0):
+                self.missiles.add(Missile(self, 90, self.flights))
+                self.missiles.add(Missile(self, -90, self.flights))
+
+        # draw & blit
+        self.update_and_blit(self.contrails)
+        self.update_and_blit(self.bullets)
+        self.update_and_blit(self.missiles)
         self.screen.blit(self.surf, self.rect)
+
+    def update_and_blit(self, group):
+        group.update()
+        for obj in group:
+            self.screen.blit(obj.surf, obj.rect)

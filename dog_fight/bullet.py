@@ -79,7 +79,7 @@ class Bullet(pygame.sprite.Sprite):
 
         self.life_tick -= 1
         if self.life_tick == 0:
-            self.kill()
+            super(Bullet, self).kill()
 
     def blit(self, screen):
         screen.blit(self.surf, self.rect)
