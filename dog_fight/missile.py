@@ -40,9 +40,9 @@ class Missile(pygame.sprite.Sprite):
             self.radians) * self.max_speed / self.flight.speed
         self.y_speed = math.sin(
             self.radians) * self.max_speed / self.flight.speed
-        print(self.radians, self.flight.dir_degree)
 
         # attribute
+        self.damage = 10
         self.life_tick = 500
         self.radius = 3
         self.explosion_radius = 7
@@ -140,6 +140,7 @@ class Missile(pygame.sprite.Sprite):
             self.life_tick -= 1
             if self.life_tick == 0 or pygame.sprite.collide_circle(
                     self, min_dist_target):
+                min_dist_target.hp -= self.damage
                 self.detonate()
 
             # contrails

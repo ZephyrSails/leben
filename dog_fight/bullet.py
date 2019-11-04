@@ -20,6 +20,7 @@ class Bullet(pygame.sprite.Sprite):
         self.y_speed = math.sin(self.radians) * self.speed
 
         # attribute
+        self.damage = 1
         self.radius = 2
         self.bg_color = flight.bg_color
         self.color = flight.color

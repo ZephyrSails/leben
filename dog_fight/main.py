@@ -16,7 +16,7 @@ COLOR_SETS = [(200, 25, 50), (25, 200, 50)]
 def main():
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
-    PANEL_HEIGHT = 100
+    PANEL_HEIGHT = 110
 
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH,
@@ -34,7 +34,7 @@ def main():
         flight = Flight(idx, game_screen, KEY_SETS[idx], COLOR_SETS[idx],
                         flights)
         flights.add(flight)
-        panels.add(Panel(flight))
+        panels.add(Panel(flight, PANEL_HEIGHT))
         scores.append(0)
 
     while running:
@@ -62,7 +62,12 @@ def main():
             collide_group = pygame.sprite.groupcollide(
                 flight_group, hostile_bullets, False, True)
             scores[idx] -= len(collide_group)
-        print('\r{}'.format(scores), end="")
+
+            for bullets in collide_group.values():
+                for bullet in bullets:
+                    flight.hp -= bullet.damage
+
+        # print('\r{}'.format(scores), end="")
 
         panels.update()
         for panel in panels:

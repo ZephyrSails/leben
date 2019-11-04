@@ -40,8 +40,8 @@ class Flight(pygame.sprite.Sprite):
         self.turn_speed = 3
 
         # status
-        self.hp_cap = 100
-        self.hp = 80
+        self.max_hp = 1000
+        self.hp = self.max_hp
 
         # attribute
         self.color = color
@@ -55,7 +55,7 @@ class Flight(pygame.sprite.Sprite):
         self.bullet_limit = 100
         self.bullet_list = []
         self.bullets = pygame.sprite.Group()
-
+        self.missiles_range = range(-60, 61, 15)
         self.missiles = pygame.sprite.Group()
 
         # decorator
@@ -144,11 +144,10 @@ class Flight(pygame.sprite.Sprite):
 
         # fire
         if pressed_keys[self.kFire]:
-            self.bullet_list.append(Bullet(self))
-            self.bullets.add(self.bullet_list[-1])
-            if len(self.bullets) > self.bullet_limit:
-                oldest_bullet = self.bullet_list.pop(0)
-                oldest_bullet.kill()
+            if len(self.bullets) < self.bullet_limit:
+                self.bullet_list.append(Bullet(self))
+                self.bullets.add(self.bullet_list[-1])
+
 
         # contrails
         self.contrails.add(Contrail(self))
@@ -156,7 +155,7 @@ class Flight(pygame.sprite.Sprite):
         # missile
         if pressed_keys[self.kMissile]:
             if (len(self.missiles) == 0):
-                for degree_delta in range(-60, 61, 15):
+                for degree_delta in self.missiles_range:
                     self.missiles.add(
                         Missile(self, degree_delta, self.flights))
 
