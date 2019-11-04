@@ -16,7 +16,7 @@ COLOR_SETS = [(200, 25, 50), (25, 200, 50)]
 def main():
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
-    PANEL_HEIGHT = 110
+    PANEL_HEIGHT = 140
 
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH,

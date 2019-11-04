@@ -42,7 +42,7 @@ class Missile(pygame.sprite.Sprite):
             self.radians) * self.max_speed / self.flight.speed
 
         # attribute
-        self.damage = 10
+        self.damage = 50
         self.life_tick = 500
         self.radius = 3
         self.explosion_radius = 7

@@ -40,8 +40,12 @@ class Flight(pygame.sprite.Sprite):
         self.turn_speed = 3
 
         # status
-        self.max_hp = 1000
+        self.max_hp = 2000
         self.hp = self.max_hp
+        self.max_gas = 100
+        self.gas = self.max_gas
+        self.gas_use_delta = 5
+        self.gas_regain_delta = 0.5
 
         # attribute
         self.color = color
@@ -52,7 +56,7 @@ class Flight(pygame.sprite.Sprite):
         self.mouth_degree = 45
 
         # projectile
-        self.bullet_limit = 100
+        self.bullet_limit = 50
         self.bullet_list = []
         self.bullets = pygame.sprite.Group()
         self.missiles_range = range(-60, 61, 15)
@@ -113,15 +117,19 @@ class Flight(pygame.sprite.Sprite):
     def update(self, pressed_keys):
         # flight motion
         if pressed_keys[self.kWarp]:
-            dx = int(self.x + self.x_warp_speed) - int(self.x)
-            dy = int(self.y + self.y_warp_speed) - int(self.y)
-            self.x += self.x_warp_speed
-            self.y += self.y_warp_speed
-            self.rect.move_ip(dx, dy)
+            if self.gas - self.gas_use_delta > 0:
+                self.gas -= self.gas_use_delta
+                dx = int(self.x + self.x_warp_speed) - int(self.x)
+                dy = int(self.y + self.y_warp_speed) - int(self.y)
+                self.x += self.x_warp_speed
+                self.y += self.y_warp_speed
+                self.rect.move_ip(dx, dy)
         if pressed_keys[self.kLeft]:
             self.set_direction(self.dir_degree - self.turn_speed)
         if pressed_keys[self.kRight]:
             self.set_direction(self.dir_degree + self.turn_speed)
+        if not pressed_keys[self.kWarp]:
+            self.gas = min(self.max_gas, self.gas_regain_delta + self.gas)
 
         dx = int(self.x + self.x_speed) - int(self.x)
         dy = int(self.y + self.y_speed) - int(self.y)
@@ -147,7 +155,6 @@ class Flight(pygame.sprite.Sprite):
             if len(self.bullets) < self.bullet_limit:
                 self.bullet_list.append(Bullet(self))
                 self.bullets.add(self.bullet_list[-1])
-
 
         # contrails
         self.contrails.add(Contrail(self))

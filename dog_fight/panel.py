@@ -37,7 +37,7 @@ class Panel(pygame.sprite.Sprite):
 
         self.text_width = 0
 
-        texts = ["HP", "BL", "MS"]
+        texts = ["HP", "BL", "MS", "GS"]
         for idx, text in enumerate(texts):
             text_surf = font.render(text, True, self.flight.color,
                                     self.flight.bg_color)
@@ -60,7 +60,7 @@ class Panel(pygame.sprite.Sprite):
              [
                  len(self.flight.missiles_range) - len(self.flight.missiles),
                  len(self.flight.missiles_range)
-             ]]):
+             ], [self.flight.gas, self.flight.max_gas]]):
 
             bar_width = int(self.bar_width * curr_val / max_val)
 
