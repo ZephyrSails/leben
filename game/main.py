@@ -1,6 +1,6 @@
 from flight import Flight
 from pflanze import Pflanze
-
+from panel import Panel
 import pygame
 from pygame.locals import (
     K_ESCAPE,

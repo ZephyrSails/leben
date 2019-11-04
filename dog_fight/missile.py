@@ -144,7 +144,7 @@ class Missile(pygame.sprite.Sprite):
 
             # contrails
             self.contrails.add(Contrail(self))
-            self.flight.update_and_blit(self.contrails)
+            self.flight.update_and_blits(self.contrails)
         if self.status == MissileStatus.Detonated:
             self.detonation_tick -= 1
             if self.detonation_tick == 0:

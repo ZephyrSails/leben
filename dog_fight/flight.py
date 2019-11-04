@@ -30,7 +30,6 @@ class Flight(pygame.sprite.Sprite):
 
         # environment
         self.screen = screen
-        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.screen.get_size()
 
         # control
         self.kWarp, self.kFire, self.kLeft, self.kRight, self.kMissile = keySet
@@ -52,20 +51,6 @@ class Flight(pygame.sprite.Sprite):
         self.view_angle = 90  # degree
         self.mouth_degree = 45
 
-        # pisition
-        self.x = random.randint(0, self.SCREEN_WIDTH)
-        self.y = random.randint(0, self.SCREEN_HEIGHT)
-
-        # pygame
-        self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
-        self.surf.set_colorkey(self.bg_color)
-
-        self.rect = self.surf.get_rect(center=(
-            int(self.x),
-            int(self.y),
-        ))
-        self.set_direction(0)
-
         # projectile
         self.bullet_limit = 100
         self.bullet_list = []
@@ -80,6 +65,22 @@ class Flight(pygame.sprite.Sprite):
         # groups
         self.flights = flights
 
+        # panel
+        self.SCREEN_WIDTH = self.screen.get_width()
+        self.SCREEN_HEIGHT = self.screen.get_height()
+
+        # pisition
+        self.x = random.randint(0, self.SCREEN_WIDTH)
+        self.y = random.randint(0, self.SCREEN_HEIGHT)
+
+        # pygame
+        self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
+        self.surf.set_colorkey(self.bg_color)
+        self.rect = self.surf.get_rect(center=(
+            int(self.x),
+            int(self.y),
+        ))
+        self.set_direction(0)
         # draw
         self.draw_mouth()
 
@@ -160,12 +161,16 @@ class Flight(pygame.sprite.Sprite):
                         Missile(self, degree_delta, self.flights))
 
         # draw & blit
-        self.update_and_blit(self.contrails)
-        self.update_and_blit(self.bullets)
-        self.update_and_blit(self.missiles)
+        self.update_and_blits(self.contrails)
+        self.update_and_blits(self.bullets)
+        self.update_and_blits(self.missiles)
         self.screen.blit(self.surf, self.rect)
 
-    def update_and_blit(self, group):
+    def update_and_blits(self, group):
         group.update()
-        for obj in group:
-            self.screen.blit(obj.surf, obj.rect)
+        for sprite in group:
+            self.screen.blit(sprite.surf, sprite.rect)
+
+    def update_and_blit(self, sprite):
+        sprite.update()
+        self.screen.blit(sprite.surf, sprite.rect)

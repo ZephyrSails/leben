@@ -1,5 +1,6 @@
 from flight import Flight
 from bullet import Bullet
+from panel import Panel
 
 import pygame
 from pygame.locals import (K_ESCAPE, KEYDOWN, QUIT, K_UP, K_RSHIFT, K_LEFT,
@@ -15,18 +16,25 @@ COLOR_SETS = [(200, 25, 50), (25, 200, 50)]
 def main():
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
+    PANEL_HEIGHT = 100
 
     pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    screen = pygame.display.set_mode((SCREEN_WIDTH,
+                                      SCREEN_HEIGHT + PANEL_HEIGHT))
+    game_screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    panel_screen = pygame.Surface((SCREEN_WIDTH, PANEL_HEIGHT))
 
     running = True
 
     flights = pygame.sprite.Group()
+    panels = pygame.sprite.Group()
 
     scores = []
     for idx in range(2):
-        flights.add(
-            Flight(idx, screen, KEY_SETS[idx], COLOR_SETS[idx], flights))
+        flight = Flight(idx, game_screen, KEY_SETS[idx], COLOR_SETS[idx],
+                        flights)
+        flights.add(flight)
+        panels.add(Panel(flight))
         scores.append(0)
 
     while running:
@@ -39,7 +47,8 @@ def main():
 
         pressed_keys = pygame.key.get_pressed()
 
-        screen.fill((0, 0, 0))
+        game_screen.fill((0, 0, 0))
+        panel_screen.fill((0, 0, 0))
 
         # for flight in flights:
         flights.update(pressed_keys)
@@ -55,6 +64,12 @@ def main():
             scores[idx] -= len(collide_group)
         print('\r{}'.format(scores), end="")
 
+        panels.update()
+        for panel in panels:
+            panel_screen.blit(panel.surf, panel.rect)
+
+        screen.blit(game_screen, (0, 0))
+        screen.blit(panel_screen, (0, SCREEN_HEIGHT))
         pygame.display.flip()
 
 
