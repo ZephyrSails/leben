@@ -28,7 +28,7 @@ class Missile(pygame.sprite.Sprite):
         self.SCREEN_HEIGHT = self.flight.SCREEN_HEIGHT
 
         # motion
-        self.max_a = 0.2
+        self.max_a = 0.25
         self.curr_a = 0
         self.inc_a = 0.002
         self.max_speed = 5
