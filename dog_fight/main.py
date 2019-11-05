@@ -7,6 +7,8 @@ from pygame.locals import (K_ESCAPE, KEYDOWN, QUIT, K_UP, K_RSHIFT, K_LEFT,
                            K_RIGHT, K_w, K_a, K_d, K_LSHIFT, K_LCTRL, K_RCTRL)
 import random
 
+from rsc.sounds import (play_list, sfx_catamaran_impact_metal)
+
 KEY_SETS = [[K_UP, K_RSHIFT, K_LEFT, K_RIGHT, K_RCTRL],
             [K_w, K_LSHIFT, K_a, K_d, K_LCTRL]]
 
@@ -62,6 +64,11 @@ def main():
             collide_group = pygame.sprite.groupcollide(
                 flight_group, hostile_bullets, False, True)
             scores[idx] -= len(collide_group)
+
+            if collide_group:
+                # TODO: pick better sound
+                # play_list(sfx_catamaran_impact_metal)
+                pass
 
             for bullets in collide_group.values():
                 for bullet in bullets:

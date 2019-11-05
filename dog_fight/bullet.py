@@ -1,9 +1,30 @@
 import pygame
 import math
 import random
+from rsc.sounds import (play_list, get_sound_from_list,
+                        sfx_weapon_c_rapidfire_light_loop_far,
+                        sfx_weapon_c_rapidfire_light_outro_far)
 
 
 class Bullet(pygame.sprite.Sprite):
+    ricochet_bullet_sound = None
+
+    @classmethod
+    def start_ricochet_bullet_sound(cls):
+        if cls.ricochet_bullet_sound == None:
+            cls.ricochet_bullet_sound = get_sound_from_list(
+                sfx_weapon_c_rapidfire_light_loop_far)
+            # TODO: pick better sound
+            # cls.ricochet_bullet_sound.play(-1)
+
+    @classmethod
+    def stop_ricochet_bullet_sound(cls):
+        if cls.ricochet_bullet_sound != None:
+            cls.ricochet_bullet_sound.stop()
+            cls.ricochet_bullet_sound = None
+            # TODO: pick better sound
+            # play_list(sfx_weapon_c_rapidfire_light_outro_far)
+
     def __init__(self, flight):
         super(Bullet, self).__init__()
         # identity
@@ -74,18 +95,23 @@ class Bullet(pygame.sprite.Sprite):
             self.y += self.y_speed
             self.rect.move_ip(dx, dy)
 
+            ricochet = False
             if self.rect.left < 0:
                 self.x_speed = -self.x_speed
-                # self.rect.move_ip(self.SCREEN_WIDTH, 0)
+                ricochet = True
             if self.rect.left > self.SCREEN_WIDTH:
                 self.x_speed = -self.x_speed
-                # self.rect.move_ip(-self.SCREEN_WIDTH, 0)
+                ricochet = True
             if self.rect.top <= 0:
                 self.y_speed = -self.y_speed
-                # self.rect.move_ip(0, self.SCREEN_HEIGHT)
+                ricochet = True
             if self.rect.top >= self.SCREEN_HEIGHT:
                 self.y_speed = -self.y_speed
-                # self.rect.move_ip(0, -self.SCREEN_HEIGHT)
+                ricochet = True
+            if ricochet:
+                Bullet.start_ricochet_bullet_sound()
+            else:
+                Bullet.stop_ricochet_bullet_sound()
 
         self.life_tick -= 1
         if self.life_tick == 0:

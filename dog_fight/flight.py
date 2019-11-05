@@ -11,6 +11,13 @@ import random
 from bullet import Bullet
 from contrail import Contrail
 from missile import Missile
+from rsc.sounds import (
+    play_list,
+    get_sound_from_list,
+    sfx_weapon_c_art_cruier_missile_fire,
+    sfx_weapon_c_rapidfire_light_loop_near,
+    sfx_weapon_c_rapidfire_light_outro_near,
+)
 
 
 class Flight(pygame.sprite.Sprite):
@@ -88,6 +95,9 @@ class Flight(pygame.sprite.Sprite):
         # draw
         self.draw_mouth()
 
+        # sounds
+        self.fire_bullet_sound = None
+
     def draw_line(self, radians):
         pygame.draw.line(
             self.surf, self.line_color, (int(self.radius), int(self.radius)),
@@ -113,6 +123,18 @@ class Flight(pygame.sprite.Sprite):
         self.x_warp_speed = self.warp_speed * cos
         self.y_warp_speed = self.warp_speed * sin
         self.draw_mouth()
+
+    def start_fire_bullet_sound(self):
+        if self.fire_bullet_sound == None:
+            self.fire_bullet_sound = get_sound_from_list(
+                sfx_weapon_c_rapidfire_light_loop_near)
+            self.fire_bullet_sound.play(-1)
+
+    def stop_fire_bullet_sound(self):
+        if self.fire_bullet_sound != None:
+            self.fire_bullet_sound.stop()
+            self.fire_bullet_sound = None
+            play_list(sfx_weapon_c_rapidfire_light_outro_near)
 
     def update(self, pressed_keys):
         # flight motion
@@ -151,10 +173,12 @@ class Flight(pygame.sprite.Sprite):
             self.y = self.rect.top + self.radius
 
         # fire
-        if pressed_keys[self.kFire]:
-            if len(self.bullets) < self.bullet_limit:
-                self.bullet_list.append(Bullet(self))
-                self.bullets.add(self.bullet_list[-1])
+        if pressed_keys[self.kFire] and len(self.bullets) < self.bullet_limit:
+            self.bullet_list.append(Bullet(self))
+            self.bullets.add(self.bullet_list[-1])
+            self.start_fire_bullet_sound()
+        else:
+            self.stop_fire_bullet_sound()
 
         # contrails
         self.contrails.add(Contrail(self))
@@ -162,6 +186,7 @@ class Flight(pygame.sprite.Sprite):
         # missile
         if pressed_keys[self.kMissile]:
             if (len(self.missiles) == 0):
+                play_list(sfx_weapon_c_art_cruier_missile_fire)
                 for degree_delta in self.missiles_range:
                     self.missiles.add(
                         Missile(self, degree_delta, self.flights))

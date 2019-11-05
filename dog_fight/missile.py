@@ -1,7 +1,9 @@
 import pygame
 import math
+import random
 from enum import Enum
 from contrail import Contrail
+from rsc.sounds import play_list, sfx_missle_impact_miss, sfx_missle_impact
 
 
 class MissileStatus(Enum):
@@ -68,7 +70,7 @@ class Missile(pygame.sprite.Sprite):
 
         # timing
         self.status = MissileStatus.Tracking
-        self.life_tick = 500
+        self.life_tick = 500 + random.randint(-25, 25)
         self.detonation_tick = 50
 
         # decorator
@@ -111,11 +113,15 @@ class Missile(pygame.sprite.Sprite):
         self.y_a = d_y * self.curr_a / min_dist
         return min_dist_target
 
-    def detonate(self):
+    def detonate(self, is_hit):
         self.status = MissileStatus.Detonated
         pygame.draw.circle(self.surf, self.color,
                            (self.bound_radius, self.bound_radius),
                            self.explosion_radius)
+        if is_hit:
+            play_list(sfx_missle_impact)
+        else:
+            play_list(sfx_missle_impact_miss)
 
     def update(self):
         if self.status == MissileStatus.Tracking:
@@ -138,10 +144,11 @@ class Missile(pygame.sprite.Sprite):
             self.rect.move_ip(dx, dy)
 
             self.life_tick -= 1
-            if self.life_tick == 0 or pygame.sprite.collide_circle(
-                    self, min_dist_target):
+            is_hit = pygame.sprite.collide_circle(self, min_dist_target)
+            if self.life_tick == 0 or is_hit:
                 min_dist_target.hp -= self.damage
-                self.detonate()
+
+                self.detonate(is_hit)
 
             # contrails
             self.contrails.add(Contrail(self))
