@@ -1,7 +1,7 @@
 ## Pre install pygame
-```
-pip install pygame
-```
+Follow here to install pygame:
+
+https://www.pygame.org/wiki/GettingStarted#Pygame%20Installation
 
 
 ## leben
@@ -9,7 +9,7 @@ pip install pygame
 python3 game/main.py
 ```
 
-life simulator
+Life simulator
 
 ## dog fight
 
