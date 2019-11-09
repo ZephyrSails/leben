@@ -23,8 +23,8 @@ def get_periphery_radians(x, y, a, b, r):
     tan = r / R
     radians_delta = math.atan(tan)
 
-    center_radians = math.pi * 1.5 if (a == x) else math.atan(
-        (b - y) / (a - x))
+    center_radians = math.pi * 1.5 if (a == x) else math.atan2((b - y),
+                                                               (a - x))
     return (center_radians - radians_delta), (center_radians + radians_delta)
 
 
@@ -35,14 +35,15 @@ def regulate_radians(radians):
 def radians_between(radians, left, right):
     left = regulate_radians(left)
     right = regulate_radians(right)
+    radians = regulate_radians(radians)
+
     if right < left:
         right += 2 * math.pi
-    radians = regulate_radians(radians)
-    radians2 = radians - 2 * math.pi
-    radians3 = radians + 2 * math.pi
-    assert right > left
-    print(left, radians, right)
-    return radians < right and radians > left or radians2 < right and radians2 > left or radians3 < right and radians3 > left
+    for i in [-2, 0, 2]:
+        temp_radians = radians + i * math.pi
+        if temp_radians < right and temp_radians > left:
+            return True
+    return False
 
 
 class Move(Enum):
@@ -154,7 +155,6 @@ class Leben(pygame.sprite.Sprite):
                                    self.dir_r_radians):
                     count += 1
                     self.draw_vison_line_from_center(radians)
-        print(count)
 
     def draw_vison_line_from_center(self, radians):
         pygame.draw.line(
