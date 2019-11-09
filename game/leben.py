@@ -41,7 +41,7 @@ class Leben(pygame.sprite.Sprite):
 
         # attribute
         self.radius = 20  # pixel
-        self.mouth_degree = 70
+        self.mouth_degree = 50
         self.view_degree = self.mouth_degree * 2
         self.color = (255, 255, 255)
         self.vision_color = (255, 255, 0)
@@ -117,18 +117,56 @@ class Leben(pygame.sprite.Sprite):
             regulate_radians_range(self.ra)
             obj_pair_in_vision.append([object])
 
+    def get_dot_from_center(self, R, radians):
+        return (int(self.x + R * math.cos(radians)),
+                int(self.y + R * math.sin(radians)))
+
     def draw_vision(self):
-        self.draw_vison_line_from_center(self.dir_l_radians)
-        self.draw_vison_line_from_center(self.dir_r_radians)
+        # self.draw_line_from_center(self.dir_l_radians)
+        # self.draw_line_from_center(self.dir_r_radians)
 
-        for obj in self.objs_in_view:
-            pass
+        self.draw_semicircle_from_center(self.vision_len, self.dir_l_radians,
+                                         self.dir_r_radians)
 
-    def draw_vison_line_from_center(self, radians):
-        pygame.draw.line(
-            self.screen, self.vision_color, (int(self.x), int(self.y)),
-            (int(self.x + self.vision_len * math.cos(radians)),
-             int(self.y + self.vision_len * math.sin(radians))), 2)
+        for l_radians, r_radians, _, R in self.objs_in_view:
+            self.draw_blind_area_from_center(R, l_radians, r_radians)
+
+    def draw_line_from_center(self, radians):
+        pygame.draw.line(self.screen, self.vision_color,
+                         (int(self.x), int(self.y)),
+                         self.get_dot_from_center(self.vision_len, radians), 2)
+
+    def draw_triangle_from_center(self, R, l_radians, r_radians):
+        pygame.draw.polygon(self.screen, self.vision_color,
+                            [(int(self.x), int(self.y)),
+                             self.get_dot_from_center(R, l_radians),
+                             self.get_dot_from_center(R, r_radians)])
+
+    def draw_semicircle_from_center(self, R, l_radians, r_radians):
+        points = [(self.x, self.y)]
+        assert(l_radians < r_radians)
+        radians = l_radians
+        while radians < r_radians:
+            points.append(self.get_dot_from_center(R, radians))
+            radians += 0.2
+        points.append(self.get_dot_from_center(R, r_radians))
+
+        pygame.draw.polygon(self.screen, self.vision_color, points)
+
+    def draw_blind_area_from_center(self, R, l_radians, r_radians):
+        assert l_radians < r_radians
+        points = [
+            self.get_dot_from_center(R, r_radians),
+            self.get_dot_from_center(R, l_radians),
+        ]
+        radians = l_radians
+
+        while radians < r_radians:
+            points.append(self.get_dot_from_center(self.vision_len, radians))
+            radians += 0.2
+        points.append(self.get_dot_from_center(self.vision_len, r_radians))
+
+        pygame.draw.polygon(self.screen, self.bg_color, points)
 
     def print(self):
         print("[{:.2f}, {:.2f}, {:.2f}]".format(self.x, self.y,
@@ -156,12 +194,17 @@ class Leben(pygame.sprite.Sprite):
             obj_in_vision = False
 
             for radians in [l_radians, r_radians]:
-                # print(left, radians, right)
                 if radians_between(radians, left, right):
                     obj_in_vision = True
-                    self.draw_vison_line_from_center(radians)
+                    # self.draw_line_from_center(radians)
             if obj_in_vision:
+                l_radians = regulate_radians(l_radians)
+                r_radians = regulate_radians(r_radians)
+                if l_radians > r_radians:
+                    r_radians += 2 * math.pi
                 self.objs_in_view.append((l_radians, r_radians, obj.color, R))
+
+            self.objs_in_view.sort(key=lambda p: p[3])
 
     def update(self, pressed_keys):
         if pressed_keys[K_UP]:
