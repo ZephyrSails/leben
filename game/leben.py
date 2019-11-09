@@ -12,6 +12,39 @@ from pygame.locals import (
 )
 
 
+def get_periphery_radians(x, y, a, b, r):
+    """
+    base: (x, y)
+    target: (a, b), r
+    """
+    if x == a and b == y:
+        return None, None
+    R = math.sqrt((b - y)**2 + (a - x)**2)
+    tan = r / R
+    radians_delta = math.atan(tan)
+
+    center_radians = math.pi * 1.5 if (a == x) else math.atan(
+        (b - y) / (a - x))
+    return (center_radians - radians_delta), (center_radians + radians_delta)
+
+
+def regulate_radians(radians):
+    return radians % (2 * math.pi)
+
+
+def radians_between(radians, left, right):
+    left = regulate_radians(left)
+    right = regulate_radians(right)
+    if right < left:
+        right += 2 * math.pi
+    radians = regulate_radians(radians)
+    radians2 = radians - 2 * math.pi
+    radians3 = radians + 2 * math.pi
+    assert right > left
+    print(left, radians, right)
+    return radians < right and radians > left or radians2 < right and radians2 > left or radians3 < right and radians3 > left
+
+
 class Move(Enum):
     F = 0  # move forward
     B = 1  # move backward
@@ -20,7 +53,7 @@ class Move(Enum):
 
 
 class Leben(pygame.sprite.Sprite):
-    def __init__(self, screen):
+    def __init__(self, screen, environment_group):
         super(Leben, self).__init__()
         # environment
         self.screen = screen
@@ -60,11 +93,15 @@ class Leben(pygame.sprite.Sprite):
 
         self.rect = self.surf.get_rect()
 
+        # environment
+        self.environment_group = environment_group
+
     def set_direction(self, degree):
-        self.dir_degree = degree % 360  # degree, 0~360, 0 is right, 90 is up
+        self.dir_degree = degree  # degree, 0~360, 0 is right, 90 is up
         self.dir_radians = math.radians(self.dir_degree)
-        self.dir_l_radians = math.radians(degree - self.mouth_degree % 360)
-        self.dir_r_radians = math.radians(degree + self.mouth_degree % 360)
+        self.dir_l_radians = math.radians(degree - self.mouth_degree)
+        self.dir_r_radians = math.radians(degree + self.mouth_degree)
+
         self.x_speed = self.speed * math.cos(self.dir_radians)
         self.y_speed = self.speed * math.sin(self.dir_radians)
 
@@ -87,6 +124,8 @@ class Leben(pygame.sprite.Sprite):
             self.set_direction(self.dir_degree + self.turn_speed)
 
     def draw_mouth_line(self, radians):
+        # while radians < 0:
+        #     radians += math.pi
         pygame.draw.line(
             self.surf, self.bg_color, (int(self.x_init), int(self.y_init)),
             (int(self.x_init + self.radius * math.cos(radians)),
@@ -100,14 +139,28 @@ class Leben(pygame.sprite.Sprite):
         self.draw_mouth_line(self.dir_r_radians)
 
     def draw_vision(self):
+        self.draw_vison_line_from_center(self.dir_l_radians)
+        self.draw_vison_line_from_center(self.dir_r_radians)
+
+        count = 0
+        for obj in self.environment_group:
+            l_radians, r_radians = get_periphery_radians(
+                self.x, self.y, obj.x, obj.y, obj.radius)
+            if l_radians == None:
+                continue
+
+            for radians in l_radians, r_radians:
+                if radians_between(radians, self.dir_l_radians,
+                                   self.dir_r_radians):
+                    count += 1
+                    self.draw_vison_line_from_center(radians)
+        print(count)
+
+    def draw_vison_line_from_center(self, radians):
         pygame.draw.line(
             self.screen, self.vision_color, (int(self.x), int(self.y)),
-            (int(self.x + self.vision_len * math.cos(self.dir_l_radians)),
-             int(self.y + self.vision_len * math.sin(self.dir_l_radians))), 2)
-        pygame.draw.line(
-            self.screen, self.vision_color, (int(self.x), int(self.y)),
-            (int(self.x + self.vision_len * math.cos(self.dir_r_radians)),
-             int(self.y + self.vision_len * math.sin(self.dir_r_radians))), 2)
+            (int(self.x + self.vision_len * math.cos(radians)),
+             int(self.y + self.vision_len * math.sin(radians))), 2)
 
     def print(self):
         print("[{:.2f}, {:.2f}, {:.2f}]".format(self.x, self.y,
@@ -122,5 +175,6 @@ class Leben(pygame.sprite.Sprite):
             self.move(Move.L)
         if pressed_keys[K_RIGHT]:
             self.move(Move.R)
-        self.draw_vision()
+
         self.draw_mouth()
+        self.draw_vision()

@@ -10,8 +10,10 @@ class Pflanze(pygame.sprite.Sprite):
 
         self.radius = 5
         self.color = (50, 250, 25)
+        self.bg_color = (0, 0, 0)
 
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
+        self.surf.set_colorkey(self.bg_color)
         self.rect = self.surf.get_rect(center=(
             self.x,
             self.y,

@@ -21,10 +21,11 @@ def main():
 
     running = True
 
-    leben = Leben(game_screen)
+    pflanzen = pygame.sprite.Group()
+
+    leben = Leben(game_screen, pflanzen)
     leben_group = pygame.sprite.Group()
     leben_group.add(leben)
-    pflanzen = pygame.sprite.Group()
 
     def add_pflanze(pflanzen):
         pflanze = Pflanze(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -42,7 +43,6 @@ def main():
                 running = False
 
         pressed_keys = pygame.key.get_pressed()
-
 
         game_screen.fill((0, 0, 0))
         leben.update(pressed_keys)
