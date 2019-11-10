@@ -1,5 +1,6 @@
 from pflanze import Pflanze
 from leben import Leben
+from vision import Vision
 import pygame
 from pygame.locals import (
     K_ESCAPE,
@@ -11,19 +12,19 @@ from pygame.locals import (
 def main():
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
-    PANEL_HEIGHT = 140
+    VISION_HEIGHT = 140
 
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH,
-                                      SCREEN_HEIGHT + PANEL_HEIGHT))
+                                      SCREEN_HEIGHT + VISION_HEIGHT))
     game_screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    panel_screen = pygame.Surface((SCREEN_WIDTH, PANEL_HEIGHT))
+    vision_screen = pygame.Surface((SCREEN_WIDTH, VISION_HEIGHT))
 
     running = True
 
     pflanzen = pygame.sprite.Group()
 
-    leben = Leben(game_screen, pflanzen)
+    leben = Leben(game_screen, vision_screen, pflanzen)
     leben_group = pygame.sprite.Group()
     leben_group.add(leben)
 
@@ -31,7 +32,7 @@ def main():
         pflanze = Pflanze(SCREEN_WIDTH, SCREEN_HEIGHT)
         pflanzen.add(pflanze)
 
-    for _ in range(28):
+    for _ in range(32):
         add_pflanze(pflanzen)
 
     while running:
@@ -58,6 +59,7 @@ def main():
             add_pflanze(pflanzen)
 
         screen.blit(game_screen, (0, 0))
+        screen.blit(vision_screen, (0, SCREEN_HEIGHT))
 
         pygame.display.flip()
 
