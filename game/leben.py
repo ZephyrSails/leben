@@ -182,9 +182,8 @@ class Leben(pygame.sprite.Sprite):
             l_radians = regulate_radians(l_radians)
             r_radians = regulate_radians(r_radians)
             if self.dir_l_radians > self.dir_r_radians:
-                if l_radians < self.dir_r_radians:
+                if l_radians < self.dir_r_radians or r_radians < self.dir_r_radians:
                     l_radians += 2 * math.pi
-                if r_radians < self.dir_r_radians:
                     r_radians += 2 * math.pi
                 self.dir_r_radians += 2 * math.pi
 
