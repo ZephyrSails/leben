@@ -1,15 +1,7 @@
 import pygame
 import math
 from enum import Enum
-from pygame.locals import (
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
-    K_ESCAPE,
-    KEYDOWN,
-    QUIT,
-)
+
 from radians_helper import (
     get_periphery_radians,
     regulate_radians,
@@ -18,7 +10,7 @@ from radians_helper import (
 )
 
 
-class Move(Enum):
+class Action(Enum):
     F = 0  # move forward
     B = 1  # move backward
     L = 2  # turn left
@@ -76,24 +68,6 @@ class Leben(pygame.sprite.Sprite):
 
         self.x_speed = self.speed * math.cos(self.dir_radians)
         self.y_speed = self.speed * math.sin(self.dir_radians)
-
-    def move(self, move):
-        if move == Move.F:
-            dx = int(self.x + self.x_speed) - int(self.x)
-            dy = int(self.y + self.y_speed) - int(self.y)
-            self.x += self.x_speed
-            self.y += self.y_speed
-            self.rect.move_ip(dx, dy)
-        if move == Move.B:
-            dx = int(self.x - self.x_speed) - int(self.x)
-            dy = int(self.y - self.y_speed) - int(self.y)
-            self.x -= self.x_speed
-            self.y -= self.y_speed
-            self.rect.move_ip(dx, dy)
-        if move == Move.L:
-            self.set_direction(self.dir_degree - self.turn_speed)
-        if move == Move.R:
-            self.set_direction(self.dir_degree + self.turn_speed)
 
     def draw_mouth_line(self, radians):
         pygame.draw.line(
@@ -218,15 +192,24 @@ class Leben(pygame.sprite.Sprite):
             pygame.draw.line(self.vision_screen, color, (idx, 0),
                              (idx, height), 1)
 
-    def update(self, pressed_keys):
-        if pressed_keys[K_UP]:
-            self.move(Move.F)
-        if pressed_keys[K_DOWN]:
-            self.move(Move.B)
-        if pressed_keys[K_LEFT]:
-            self.move(Move.L)
-        if pressed_keys[K_RIGHT]:
-            self.move(Move.R)
+    def update(self, moves):
+        print(moves)
+        if Action.F in moves:
+            dx = int(self.x + self.x_speed) - int(self.x)
+            dy = int(self.y + self.y_speed) - int(self.y)
+            self.x += self.x_speed
+            self.y += self.y_speed
+            self.rect.move_ip(dx, dy)
+        if Action.B in moves:
+            dx = int(self.x - self.x_speed) - int(self.x)
+            dy = int(self.y - self.y_speed) - int(self.y)
+            self.x -= self.x_speed
+            self.y -= self.y_speed
+            self.rect.move_ip(dx, dy)
+        if Action.L in moves:
+            self.set_direction(self.dir_degree - self.turn_speed)
+        if Action.R in moves:
+            self.set_direction(self.dir_degree + self.turn_speed)
 
         self.update_vision()
 

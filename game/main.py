@@ -1,41 +1,46 @@
 from pflanze import Pflanze
-from leben import Leben
+from leben import Leben, Action
 from vision import Vision
 import pygame
 from pygame.locals import (
     K_ESCAPE,
     KEYDOWN,
     QUIT,
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
 )
 
 
-def main():
-    SCREEN_WIDTH = 800
-    SCREEN_HEIGHT = 600
-    VISION_HEIGHT = 140
+class Game:
+    def __init__(self):
+        self.SCREEN_WIDTH = 800
+        self.SCREEN_HEIGHT = 600
+        self.VISION_HEIGHT = 140
 
-    pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH,
-                                      SCREEN_HEIGHT + VISION_HEIGHT))
-    game_screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    vision_screen = pygame.Surface((SCREEN_WIDTH, VISION_HEIGHT))
+        pygame.init()
+        self.screen = pygame.display.set_mode(
+            (self.SCREEN_WIDTH, self.SCREEN_HEIGHT + self.VISION_HEIGHT))
+        self.game_screen = pygame.Surface((self.SCREEN_WIDTH,
+                                           self.SCREEN_HEIGHT))
+        self.vision_screen = pygame.Surface((self.SCREEN_WIDTH,
+                                             self.VISION_HEIGHT))
+        self.running = True
 
-    running = True
+        self.pflanzen = pygame.sprite.Group()
 
-    pflanzen = pygame.sprite.Group()
+        self.leben = Leben(self.game_screen, self.vision_screen, self.pflanzen)
+        self.leben_group = pygame.sprite.Group()
+        self.leben_group.add(self.leben)
 
-    leben = Leben(game_screen, vision_screen, pflanzen)
-    leben_group = pygame.sprite.Group()
-    leben_group.add(leben)
+        for _ in range(32):
+            self.add_pflanze()
 
-    def add_pflanze(pflanzen):
-        pflanze = Pflanze(SCREEN_WIDTH, SCREEN_HEIGHT)
-        pflanzen.add(pflanze)
+    def add_pflanze(self):
+        self.pflanzen.add(Pflanze(self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
 
-    for _ in range(32):
-        add_pflanze(pflanzen)
-
-    while running:
+    def update(self, actions):
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
@@ -43,25 +48,43 @@ def main():
             elif event.type == QUIT:
                 running = False
 
-        pressed_keys = pygame.key.get_pressed()
+        self.game_screen.fill((0, 0, 0))
+        self.leben.update(actions)
 
-        game_screen.fill((0, 0, 0))
-        leben.update(pressed_keys)
+        self.game_screen.blit(self.leben.surf, self.leben.rect)
 
-        game_screen.blit(leben.surf, leben.rect)
+        for pflanze in self.pflanzen:
+            self.game_screen.blit(pflanze.surf, pflanze.rect)
 
-        for pflanze in pflanzen:
-            game_screen.blit(pflanze.surf, pflanze.rect)
-
-        collide_group = pygame.sprite.groupcollide(leben_group, pflanzen,
-                                                   False, True)
+        collide_group = pygame.sprite.groupcollide(self.leben_group,
+                                                   self.pflanzen, False, True)
         for _ in range(len(collide_group)):
-            add_pflanze(pflanzen)
+            self.add_pflanze()
 
-        screen.blit(game_screen, (0, 0))
-        screen.blit(vision_screen, (0, SCREEN_HEIGHT))
+        self.screen.blit(self.game_screen, (0, 0))
+        self.screen.blit(self.vision_screen, (0, self.SCREEN_HEIGHT))
 
         pygame.display.flip()
+
+
+def pressed_keys_to_actions():
+    moves = set([])
+    pressed_keys = pygame.key.get_pressed()
+    if pressed_keys[K_UP]:
+        moves.add(Action.F)
+    if pressed_keys[K_DOWN]:
+        moves.add(Action.B)
+    if pressed_keys[K_LEFT]:
+        moves.add(Action.L)
+    if pressed_keys[K_RIGHT]:
+        moves.add(Action.R)
+    return moves
+
+
+def main():
+    game = Game()
+    while game.running:
+        game.update(pressed_keys_to_actions())
 
 
 if __name__ == "__main__":
