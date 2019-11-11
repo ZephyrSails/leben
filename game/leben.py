@@ -1,20 +1,12 @@
 import pygame
 import math
-from enum import Enum
-
+from utils import Action
 from radians_helper import (
     get_periphery_radians,
     regulate_radians,
     regulate_radians_between,
     radians_between,
 )
-
-
-class Action(Enum):
-    F = 0  # move forward
-    B = 1  # move backward
-    L = 2  # turn left
-    R = 3  # turn right
 
 
 class Leben(pygame.sprite.Sprite):

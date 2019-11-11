@@ -1,5 +1,6 @@
 from pflanze import Pflanze
-from leben import Leben, Action
+from leben import Leben
+from utils import Action
 from vision import Vision
 import pygame
 from pygame.locals import (
