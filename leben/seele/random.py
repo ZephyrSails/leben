@@ -1,5 +1,4 @@
-from game.game import Game
-from game.utils import Action
+from game.game import Game, Action
 import random
 
 

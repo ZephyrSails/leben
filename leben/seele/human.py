@@ -1,5 +1,4 @@
-from game.game import Game
-from game.utils import Action
+from game.game import Game, Action
 from pygame.locals import (
     K_UP,
     K_DOWN,

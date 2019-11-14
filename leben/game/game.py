@@ -1,7 +1,5 @@
 from .pflanze import Pflanze
-from .leben import Leben
-from .utils import Action
-from .vision import Vision
+from .leben import Leben, Action
 import pygame
 from pygame.locals import (
     K_ESCAPE,
