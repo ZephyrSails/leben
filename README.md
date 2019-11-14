@@ -6,7 +6,8 @@ https://www.pygame.org/wiki/GettingStarted#Pygame%20Installation
 
 ## leben
 ```
-python3 leben/main.py
+python3 leben/main.py --seele human
+python3 leben/main.py --seele random
 ```
 
 Life simulator
