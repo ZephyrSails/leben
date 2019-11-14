@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from enum import Enum
 from .helpers.radians_helper import (
     get_periphery_radians,
@@ -45,9 +46,9 @@ class Leben(pygame.sprite.Sprite):
         # pisition
         self.x_init = self.radius
         self.y_init = self.radius
-        self.x = self.x_init
-        self.y = self.y_init
-        self.set_direction(0)
+        self.x = random.randint(0, self.game_screen.get_width())
+        self.y = random.randint(0, self.game_screen.get_height())
+        self.set_direction(random.randint(0, 360))
 
         # pygame
         self.surf = pygame.Surface((self.radius * 2, self.radius * 2))
@@ -57,7 +58,10 @@ class Leben(pygame.sprite.Sprite):
                            self.radius)
         self.draw_mouth()
 
-        self.rect = self.surf.get_rect()
+        self.rect = self.surf.get_rect(center=(
+            int(self.x),
+            int(self.y),
+        ))
 
     def set_direction(self, degree):
         self.dir_degree = degree  # degree, 0~360, 0 is right, 90 is up
