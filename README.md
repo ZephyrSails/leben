@@ -6,7 +6,7 @@ https://www.pygame.org/wiki/GettingStarted#Pygame%20Installation
 
 ## leben
 ```
-python3 game/main.py
+python3 leben/main.py
 ```
 
 Life simulator

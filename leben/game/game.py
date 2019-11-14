@@ -1,16 +1,12 @@
-from pflanze import Pflanze
-from leben import Leben
-from utils import Action
-from vision import Vision
+from .pflanze import Pflanze
+from .leben import Leben
+from .utils import Action
+from .vision import Vision
 import pygame
 from pygame.locals import (
     K_ESCAPE,
     KEYDOWN,
     QUIT,
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
 )
 
 
@@ -66,27 +62,3 @@ class Game:
         self.screen.blit(self.vision_screen, (0, self.SCREEN_HEIGHT))
 
         pygame.display.flip()
-
-
-def pressed_keys_to_actions():
-    moves = set([])
-    pressed_keys = pygame.key.get_pressed()
-    if pressed_keys[K_UP]:
-        moves.add(Action.F)
-    if pressed_keys[K_DOWN]:
-        moves.add(Action.B)
-    if pressed_keys[K_LEFT]:
-        moves.add(Action.L)
-    if pressed_keys[K_RIGHT]:
-        moves.add(Action.R)
-    return moves
-
-
-def main():
-    game = Game()
-    while game.running:
-        game.update(pressed_keys_to_actions())
-
-
-if __name__ == "__main__":
-    main()

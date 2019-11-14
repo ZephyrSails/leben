@@ -1,7 +1,7 @@
 import pygame
 import math
-from utils import Action
-from radians_helper import (
+from .utils import Action
+from .radians_helper import (
     get_periphery_radians,
     regulate_radians,
     regulate_radians_between,
