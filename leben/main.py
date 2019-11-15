@@ -1,6 +1,7 @@
 import argparse
 from seele.human import human_player
 from seele.random import random_player
+from seele.rulebase import rulebase_player
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -15,3 +16,5 @@ if __name__ == "__main__":
         human_player()
     elif args.seele == "random":
         random_player()
+    elif args.seele == "rulebase":
+        rulebase_player()

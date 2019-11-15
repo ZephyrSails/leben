@@ -60,3 +60,6 @@ class Game:
         self.screen.blit(self.vision_screen, (0, self.SCREEN_HEIGHT))
 
         pygame.display.flip()
+
+    def get_1d_vision(self, width):
+        return self.leben.get_1d_vision(width)
