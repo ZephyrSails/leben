@@ -11,11 +11,9 @@ def get_periphery_radians(x, y, a, b, r):
     if x == a and b == y:
         return None, None
     R = math.sqrt((b - y)**2 + (a - x)**2)
-    tan = r / R
-    radians_delta = math.atan(tan)
+    radians_delta = math.atan2(r, R)
 
-    center_radians = math.pi * 1.5 if (a == x) else math.atan2((b - y),
-                                                               (a - x))
+    center_radians = math.atan2((b - y), (a - x))
     return (center_radians - radians_delta), (
         center_radians + radians_delta), R
 

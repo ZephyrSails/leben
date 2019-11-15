@@ -5,7 +5,6 @@ from enum import Enum
 from .helpers.radians_helper import (
     get_periphery_radians,
     regulate_radians,
-    regulate_radians_between,
     radians_between,
 )
 
@@ -25,6 +24,7 @@ class Leben(pygame.sprite.Sprite):
         self.vision_screen = vision_screen
         self.environment_group = environment_group
         self.objs_in_view = []
+        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.game_screen.get_size()
 
         # motion
         self.speed = 7
@@ -46,8 +46,8 @@ class Leben(pygame.sprite.Sprite):
         # pisition
         self.x_init = self.radius
         self.y_init = self.radius
-        self.x = random.randint(0, self.game_screen.get_width())
-        self.y = random.randint(0, self.game_screen.get_height())
+        self.x = random.randint(0, self.SCREEN_WIDTH)
+        self.y = random.randint(0, self.SCREEN_HEIGHT)
         self.set_direction(random.randint(0, 360))
 
         # pygame
@@ -84,12 +84,6 @@ class Leben(pygame.sprite.Sprite):
         self.draw_mouth_line(self.dir_radians)
         self.draw_mouth_line(self.dir_l_radians)
         self.draw_mouth_line(self.dir_r_radians)
-
-    def get_obj_pair_in_vision(self):
-        obj_pair_in_vision = []
-        for obj in self.objs_in_view:
-            regulate_radians_range(self.ra)
-            obj_pair_in_vision.append([object])
 
     def get_dot_from_center(self, R, radians):
         return (int(self.x + R * math.cos(radians)),
@@ -153,7 +147,6 @@ class Leben(pygame.sprite.Sprite):
                 self.x, self.y, obj.x, obj.y, obj.radius)
             if l_radians == None or r_radians == None:
                 continue
-
             self.dir_l_radians = regulate_radians(self.dir_l_radians)
             self.dir_r_radians = regulate_radians(self.dir_r_radians)
             l_radians = regulate_radians(l_radians)
@@ -196,19 +189,22 @@ class Leben(pygame.sprite.Sprite):
                              (idx, height), 1)
 
     def update(self, moves):
-        print(moves)
+        x_next = self.x
+        y_next = self.y
         if Action.F in moves:
-            dx = int(self.x + self.x_speed) - int(self.x)
-            dy = int(self.y + self.y_speed) - int(self.y)
-            self.x += self.x_speed
-            self.y += self.y_speed
-            self.rect.move_ip(dx, dy)
+            x_next += self.x_speed
+            y_next += self.y_speed
         if Action.B in moves:
-            dx = int(self.x - self.x_speed) - int(self.x)
-            dy = int(self.y - self.y_speed) - int(self.y)
-            self.x -= self.x_speed
-            self.y -= self.y_speed
-            self.rect.move_ip(dx, dy)
+            x_next -= self.x_speed
+            y_next -= self.y_speed
+        x_next = max(0, min(self.SCREEN_WIDTH, x_next))
+        y_next = max(0, min(self.SCREEN_HEIGHT, y_next))
+
+        dx = int(x_next) - int(self.x)
+        dy = int(y_next) - int(self.y)
+        self.x = x_next
+        self.y = y_next
+        self.rect.move_ip(dx, dy)
         if Action.L in moves:
             self.set_direction(self.dir_degree - self.turn_speed)
         if Action.R in moves:
