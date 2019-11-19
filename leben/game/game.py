@@ -30,9 +30,9 @@ class Game:
         self.leben_group.add(self.leben)
 
         for _ in range(32):
-            self.add_pflanze()
+            self._add_pflanze()
 
-    def add_pflanze(self):
+    def _add_pflanze(self):
         self.pflanzen.add(Pflanze(self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
 
     def update(self, actions):
@@ -53,8 +53,9 @@ class Game:
 
         collide_group = pygame.sprite.groupcollide(self.leben_group,
                                                    self.pflanzen, False, True)
+        self.leben.update_reward(actions, collide_group)
         for _ in range(len(collide_group)):
-            self.add_pflanze()
+            self._add_pflanze()
 
         self.screen.blit(self.game_screen, (0, 0))
         self.screen.blit(self.vision_screen, (0, self.SCREEN_HEIGHT))
@@ -63,3 +64,6 @@ class Game:
 
     def get_1d_vision(self, width):
         return self.leben.get_1d_vision(width)
+
+    def get_state(self):
+        return self.leben.get_state()

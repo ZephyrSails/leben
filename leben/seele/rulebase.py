@@ -36,3 +36,4 @@ def rulebase_player():
     game = Game()
     while game.running:
         game.update(rulebase_actions(game.get_1d_vision(100)))
+        print(game.get_state())

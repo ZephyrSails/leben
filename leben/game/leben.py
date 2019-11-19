@@ -33,6 +33,7 @@ class Leben(pygame.sprite.Sprite):
         # status
         self.hp_cap = 100
         self.hp = 80
+        self.curr_delta = 0
 
         # attribute
         self.radius = 20  # pixel
@@ -188,13 +189,13 @@ class Leben(pygame.sprite.Sprite):
             pygame.draw.line(self.vision_screen, color, (idx, 0),
                              (idx, height), 1)
 
-    def update(self, moves):
+    def update(self, actions):
         x_next = self.x
         y_next = self.y
-        if Action.F in moves:
+        if Action.F in actions:
             x_next += self.x_speed
             y_next += self.y_speed
-        if Action.B in moves:
+        if Action.B in actions:
             x_next -= self.x_speed
             y_next -= self.y_speed
         x_next = max(0, min(self.SCREEN_WIDTH, x_next))
@@ -205,9 +206,9 @@ class Leben(pygame.sprite.Sprite):
         self.x = x_next
         self.y = y_next
         self.rect.move_ip(dx, dy)
-        if Action.L in moves:
+        if Action.L in actions:
             self.set_direction(self.dir_degree - self.turn_speed)
-        if Action.R in moves:
+        if Action.R in actions:
             self.set_direction(self.dir_degree + self.turn_speed)
 
         self.update_vision()
@@ -216,3 +217,19 @@ class Leben(pygame.sprite.Sprite):
         self.draw_vision()
 
         self.draw_1d_vision()
+
+    def update_reward(self, actions, collide_group):
+        hp = self.hp - 0.01
+        for key in collide_group:
+            for pflanze in collide_group[key]:
+                hp += pflanze.value
+        if len(actions) > 0:
+            hp -= 0.1
+
+        hp = min(hp, self.hp_cap)
+
+        self.curr_delta = hp - self.hp
+        self.hp = hp
+
+    def get_state(self):
+        return self.hp, self.curr_delta
