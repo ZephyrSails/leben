@@ -31,7 +31,8 @@ class Leben(pygame.sprite.Sprite):
         self.turn_speed = 5
 
         # status
-        self.hp_cap = 100
+        self.id = 0
+        self.max_hp = 100
         self.hp = 80
         self.curr_delta = 0
 
@@ -226,7 +227,7 @@ class Leben(pygame.sprite.Sprite):
         if len(actions) > 0:
             hp -= 0.1
 
-        hp = min(hp, self.hp_cap)
+        hp = min(hp, self.max_hp)
 
         self.curr_delta = hp - self.hp
         self.hp = hp
