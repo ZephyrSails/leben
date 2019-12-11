@@ -1,28 +1,31 @@
 import torch
 from torch import nn
-from game.game import Game, Action
-
-VISION_RESOLUION = 126
 
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
 
-        self.number_of_actions = len(Action)
+        self.number_of_actions = 2
+        self.gamma = 0.99
+        self.final_epsilon = 0.0001
+        self.initial_epsilon = 0.1
+        self.number_of_iterations = 2000000
+        self.replay_memory_size = 10000
+        self.minibatch_size = 32
 
-        self.conv1 = nn.Conv1d(4, 32, 8, 4)
+        self.conv1 = nn.Conv2d(4, 32, 8, 4)
         self.relu1 = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv1d(32, 64, 4, 2)
+        self.conv2 = nn.Conv2d(32, 64, 4, 2)
         self.relu2 = nn.ReLU(inplace=True)
-        self.conv3 = nn.Conv1d(64, 64, 3, 1)
+        self.conv3 = nn.Conv2d(64, 64, 3, 1)
         self.relu3 = nn.ReLU(inplace=True)
-        self.fc4 = nn.Linear(768, 128)
+        self.fc4 = nn.Linear(3136, 512)
         self.relu4 = nn.ReLU(inplace=True)
-        self.fc5 = nn.Linear(128, self.number_of_actions)
+        self.fc5 = nn.Linear(512, self.number_of_actions)
 
-    def forward(self, state):
-        out = self.conv1(state)
+    def forward(self, x):
+        out = self.conv1(x)
         out = self.relu1(out)
         out = self.conv2(out)
         out = self.relu2(out)
@@ -44,7 +47,7 @@ def train(model, start):
     criterion = nn.MSELoss()
 
     # instantiate game
-    game = Game()
+    game_state = GameState()
 
     # initialize replay memory
     replay_memory = []
@@ -52,11 +55,11 @@ def train(model, start):
     # initial action is do nothing
     action = torch.zeros([model.number_of_actions], dtype=torch.float32)
     action[0] = 1
-
-    vision = game.get_1d_vision(VISION_RESOLUION)
-    hp, curr_delta = game.get_state()
-    state = torch.cat((torch.tensor(vision), torch.tensor(hp),
-                       torch.tensor(curr_delta)))
+    image_data, reward, terminal = game_state.frame_step(action)
+    image_data = resize_and_bgr2gray(image_data)
+    image_data = image_to_tensor(image_data)
+    state = torch.cat((image_data, image_data, image_data,
+                       image_data)).unsqueeze(0)
 
     # initialize epsilon value
     epsilon = model.initial_epsilon
