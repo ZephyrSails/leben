@@ -8,6 +8,7 @@ https://www.pygame.org/wiki/GettingStarted#Pygame%20Installation
 ```
 python3 leben/main.py --seele human
 python3 leben/main.py --seele random
+python3 leben/main.py --seele rulebase
 ```
 
 Life simulator
