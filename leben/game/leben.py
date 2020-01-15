@@ -183,6 +183,10 @@ class Leben(pygame.sprite.Sprite):
             vision[left_idx:right_idx] = [color] * (right_idx - left_idx)
         return vision
 
+    def get_1d_vision_binary(self, width):
+        vision = self.get_1d_vision(width)
+        return [0 if color == (0, 0, 0) else 1 for color in vision]
+
     def draw_1d_vision(self):
         width, height = self.vision_screen.get_size()
         color_table = self.get_1d_vision(width)

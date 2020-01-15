@@ -4,12 +4,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     '--seele',
     type=str,
+    default="human",
     help='Who controls the game? See main.py about options')
 parser.add_argument(
-    '--mode',
-    type=str,
-    default="eval"
-    help='eval or train mode')
+    '--mode', type=str, default="eval", help='eval or train mode')
+
 
 def evaluate(args):
     if args.seele == "human":
@@ -22,11 +21,15 @@ def evaluate(args):
         from seele.rulebase import rulebase_player
         rulebase_player()
 
+
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    if args.help == "eval":
+    if args.mode == "eval":
         evaluate(args)
-    if args.help == "train":
-        
+    if args.mode == "train":
+        from seele.reinforcement import train, NeuralNetwork
+        import time
+        model = NeuralNetwork()
+        train(model, time.time())
         pass
