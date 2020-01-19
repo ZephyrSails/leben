@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from game.game import Game, Action
 import numpy as np
+import random
 
 VISION_RESOLUION = 126
 
@@ -42,6 +43,15 @@ class NeuralNetwork(nn.Module):
 
         return out
 
+def get_model_state(game):
+    vision = game.get_1d_vision_binary(VISION_RESOLUION)
+    hp, curr_delta = game.get_state()
+    vision = torch.tensor(vision)
+    hp = torch.tensor([hp])
+    curr_delta = torch.tensor([curr_delta])
+    state = torch.cat((vision, hp, curr_delta)).unsqueeze(0)
+    state = torch.cat((state, state, state, state)).unsqueeze(0).float()
+    return state
 
 def train(model, start):
     print("define Adam optimizer")
@@ -65,12 +75,7 @@ def train(model, start):
     action = torch.zeros([model.number_of_actions], dtype=torch.float32)
     action[0] = 1
 
-    vision = game.get_1d_vision(VISION_RESOLUION)
-    hp, curr_delta = game.get_state()
-    vision = torch.tensor(vision)
-    hp = torch.tensor([hp])
-    curr_delta = torch.tensor([curr_delta])
-    state = torch.cat((vision, hp, curr_delta))
+    state = get_model_state(game)
 
     print("initialize epsilon value")
     # initialize epsilon value
@@ -83,7 +88,7 @@ def train(model, start):
     print("main infinite loop")
     # main infinite loop
     while iteration < model.number_of_iterations:
-        print("get output from the neural network")
+        print("get output from the neural network, state.size:", state.size())
         # get output from the neural network
         output = model(state)[0]
         print("initialize action")
@@ -108,11 +113,7 @@ def train(model, start):
         action[action_index] = 1
         print("get next state and reward")
         # get next state and reward
-        image_data_1, reward, terminal = game_state.frame_step(action)
-        image_data_1 = resize_and_bgr2gray(image_data_1)
-        image_data_1 = image_to_tensor(image_data_1)
-        state_1 = torch.cat((state.squeeze(0)[1:, :, :],
-                             image_data_1)).unsqueeze(0)
+        state_1 = get_model_state(game)
 
         action = action.unsqueeze(0)
         reward = torch.from_numpy(np.array([reward],

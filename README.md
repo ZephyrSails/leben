@@ -13,6 +13,11 @@ python3 leben/main.py --seele rulebase
 
 Life simulator
 
+## train
+```
+python leben/main.py --mode train --seele reinforcement
+```
+
 ## dog fight
 
 ```

@@ -79,8 +79,11 @@ class Game:
 
         pygame.display.flip()
 
-    def get_1d_vision(self, width):
+    def get_1d_vision_binary(self, width):
         return self.leben.get_1d_vision_binary(width)
+
+    def get_1d_vision(self, width):
+        return self.leben.get_1d_vision(width)
 
     def get_state(self):
         return self.leben.get_state()
