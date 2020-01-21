@@ -34,7 +34,7 @@ class Leben(pygame.sprite.Sprite):
         self.id = 0
         self.max_hp = 100
         self.hp = 80
-        self.curr_delta = 0
+        self.curr_delta = 0 # hp delta, a.k.a reward
 
         # attribute
         self.radius = 20  # pixel

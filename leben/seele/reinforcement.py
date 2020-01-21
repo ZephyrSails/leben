@@ -3,8 +3,22 @@ from torch import nn
 from game.game import Game, Action
 import numpy as np
 import random
+import time
+import sys
 
 VISION_RESOLUION = 126
+
+
+def reinforcement_player():
+    model = torch.load("pretrained_model/current_model_25000.pth")
+    model = model.cpu()
+    model.eval()
+    game = Game()
+    while game.running:
+        state, _reward, _terminal = get_model_state(game)
+        output = model(state)
+        game.update(set([Action(torch.argmax(output).item())]))
+
 
 
 class NeuralNetwork(nn.Module):
@@ -43,64 +57,59 @@ class NeuralNetwork(nn.Module):
 
         return out
 
+
 def get_model_state(game):
     vision = game.get_1d_vision_binary(VISION_RESOLUION)
-    hp, curr_delta = game.get_state()
-    vision = torch.tensor(vision)
-    hp = torch.tensor([hp])
-    curr_delta = torch.tensor([curr_delta])
-    state = torch.cat((vision, hp, curr_delta)).unsqueeze(0)
+    hp, reward = game.get_state()
+    vision = torch.tensor(vision).float()
+    hp = torch.tensor([hp]).float()
+    reward = torch.tensor([reward]).float()
+    state = torch.cat((vision, hp, reward)).unsqueeze(0)
     state = torch.cat((state, state, state, state)).unsqueeze(0).float()
-    return state
+    return state, reward, 1
+
 
 def train(model, start):
-    print("define Adam optimizer")
+    if torch.cuda.is_available():  # put on GPU if CUDA is available
+        model = model.cuda()
     # define Adam optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-6)
 
-    print("initialize mean squared error loss")
     # initialize mean squared error loss
     criterion = nn.MSELoss()
 
-    print("instantiate game")
     # instantiate game
     game = Game()
 
-    print("initialize replay memory")
     # initialize replay memory
     replay_memory = []
 
-    print("initial action is do nothing")
     # initial action is do nothing
     action = torch.zeros([model.number_of_actions], dtype=torch.float32)
     action[0] = 1
 
-    state = get_model_state(game)
+    state, _reward, _terminal = get_model_state(game)
 
-    print("initialize epsilon value")
     # initialize epsilon value
     epsilon = model.initial_epsilon
     iteration = 0
 
-    epsilon_decrements = np.linspace(
-        model.initial_epsilon, model.final_epsilon, model.number_of_iterations)
+    epsilon_decrements = np.linspace(model.initial_epsilon,
+                                     model.final_epsilon,
+                                     model.number_of_iterations)
 
-    print("main infinite loop")
     # main infinite loop
     while iteration < model.number_of_iterations:
-        print("get output from the neural network, state.size:", state.size())
+        if torch.cuda.is_available():  # put on GPU if CUDA is available
+            state = state.cuda()
         # get output from the neural network
         output = model(state)[0]
-        print("initialize action")
         # initialize action
         action = torch.zeros([model.number_of_actions], dtype=torch.float32)
         if torch.cuda.is_available():  # put on GPU if CUDA is available
             action = action.cuda()
-        print("epsilon greedy exploration")
         # epsilon greedy exploration
         random_action = random.random() <= epsilon
-        if random_action:
-            print("Performed random action!")
         action_index = [
             torch.randint(
                 model.number_of_actions, torch.Size([]), dtype=torch.int)
@@ -111,31 +120,25 @@ def train(model, start):
             action_index = action_index.cuda()
 
         action[action_index] = 1
-        print("get next state and reward")
         # get next state and reward
-        state_1 = get_model_state(game)
+        state_1, reward, terminal = get_model_state(game)
 
         action = action.unsqueeze(0)
         reward = torch.from_numpy(np.array([reward],
                                            dtype=np.float32)).unsqueeze(0)
 
-        print("save transition to replay memory")
         # save transition to replay memory
         replay_memory.append((state, action, reward, state_1, terminal))
-        print("if replay memory is full, remove the oldest transition")
         # if replay memory is full, remove the oldest transition
         if len(replay_memory) > model.replay_memory_size:
             replay_memory.pop(0)
 
-        print("epsilon annealing")
         # epsilon annealing
         epsilon = epsilon_decrements[iteration]
-        print("sample random minibatch")
         # sample random minibatch
         minibatch = random.sample(
             replay_memory, min(len(replay_memory), model.minibatch_size))
 
-        print("unpack minibatch")
         # unpack minibatch
         state_batch = torch.cat(tuple(d[0] for d in minibatch))
         action_batch = torch.cat(tuple(d[1] for d in minibatch))
@@ -148,47 +151,34 @@ def train(model, start):
             reward_batch = reward_batch.cuda()
             state_1_batch = state_1_batch.cuda()
 
-        print("get output for the next state")
         # get output for the next state
         output_1_batch = model(state_1_batch)
 
-        print(
-            "set y_j to r_j for terminal state, otherwise to r_j + gamma*max(Q)"
-        )
         # set y_j to r_j for terminal state, otherwise to r_j + gamma*max(Q)
         y_batch = torch.cat(
             tuple(reward_batch[i] if minibatch[i][4] else reward_batch[i] +
                   model.gamma * torch.max(output_1_batch[i])
                   for i in range(len(minibatch))))
 
-        print("extract Q-value")
         # extract Q-value
         q_value = torch.sum(model(state_batch) * action_batch, dim=1)
 
-        print(
-            "PyTorch accumulates gradients by default, so they need to be reset in each pass"
-        )
         # PyTorch accumulates gradients by default, so they need to be reset in each pass
         optimizer.zero_grad()
 
-        print(
-            "returns a new Tensor, detached from the current graph, the result will never require gradient"
-        )
         # returns a new Tensor, detached from the current graph, the result will never require gradient
         y_batch = y_batch.detach()
 
-        print("calculate loss")
         # calculate loss
         loss = criterion(q_value, y_batch)
 
-        print("do backward pass")
         # do backward pass
         loss.backward()
         optimizer.step()
 
-        print("set state to be state_1")
         # set state to be state_1
         state = state_1
+
         iteration += 1
 
         if iteration % 25000 == 0:
@@ -196,8 +186,12 @@ def train(model, start):
                 model,
                 "pretrained_model/current_model_" + str(iteration) + ".pth")
 
-        print("iteration:", iteration, "elapsed time:",
-              time.time() - start, "epsilon:", epsilon, "action:",
-              action_index.cpu().detach().numpy(), "reward:",
-              reward.numpy()[0][0], "Q max:",
-              np.max(output.cpu().detach().numpy()))
+        print(
+            "iteration: {}\telapsed time: {:0.2f}\tepsilon: {}\taction: {}\treward: {}\tQ max: {}"
+            .format(iteration,
+                    time.time() - start, epsilon,
+                    action_index.cpu().detach().numpy(),
+                    reward.numpy()[0][0],
+                    np.max(output.cpu().detach().numpy())),
+            end='\r')
+        sys.stdout.flush()

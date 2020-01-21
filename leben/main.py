@@ -20,7 +20,9 @@ def evaluate(args):
     elif args.seele == "rulebase":
         from seele.rulebase import rulebase_player
         rulebase_player()
-
+    elif args.seele == "reinforcement":
+        from seele.reinforcement import reinforcement_player
+        reinforcement_player()
 
 if __name__ == "__main__":
     args = parser.parse_args()
