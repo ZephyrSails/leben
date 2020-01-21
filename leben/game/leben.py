@@ -34,7 +34,7 @@ class Leben(pygame.sprite.Sprite):
         self.id = 0
         self.max_hp = 100
         self.hp = 80
-        self.curr_delta = 0 # hp delta, a.k.a reward
+        self.curr_delta = 0  # hp delta, a.k.a reward
 
         # attribute
         self.radius = 20  # pixel
@@ -45,7 +45,7 @@ class Leben(pygame.sprite.Sprite):
         self.bg_color = (0, 0, 0)
         self.vision_len = 1000
 
-        # pisition
+        # position
         self.x_init = self.radius
         self.y_init = self.radius
         self.x = random.randint(0, self.SCREEN_WIDTH)
@@ -75,10 +75,11 @@ class Leben(pygame.sprite.Sprite):
         self.y_speed = self.speed * math.sin(self.dir_radians)
 
     def draw_mouth_line(self, radians):
-        pygame.draw.line(
-            self.surf, self.bg_color, (int(self.x_init), int(self.y_init)),
-            (int(self.x_init + self.radius * math.cos(radians)),
-             int(self.y_init + self.radius * math.sin(radians))), 2)
+        pygame.draw.line(self.surf, self.bg_color,
+                         (int(self.x_init), int(self.y_init)),
+                         (int(self.x_init + self.radius * math.cos(radians)),
+                          int(self.y_init + self.radius * math.sin(radians))),
+                         2)
 
     def draw_mouth(self):
         pygame.draw.circle(self.surf, self.color, (self.x_init, self.y_init),
@@ -238,3 +239,7 @@ class Leben(pygame.sprite.Sprite):
 
     def get_state(self):
         return self.hp, self.curr_delta
+
+    def get_status_str(self):
+        return "[{:0.2f}, {:0.2f}] dir: {:0.2f}, hp: {:0.2f}".format(
+            self.x, self.y, self.dir_degree, self.hp)

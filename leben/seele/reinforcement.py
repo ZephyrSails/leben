@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from game.game import Game, Action
+from seele.rulebase import rulebase_actions
 import numpy as np
 import random
 import time
@@ -20,6 +21,15 @@ def reinforcement_player():
         game.update(set([Action(torch.argmax(output).item())]))
 
 
+def rulebase_teacher(game):
+    actions = rulebase_actions(game.get_1d_vision(126))
+    action_list = [action.value for action in actions]
+    return random.sample(action_list, 1)[0]
+
+
+def random_teacher():
+    return random.randint(0, model.number_of_actions - 1)
+
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -27,9 +37,9 @@ class NeuralNetwork(nn.Module):
 
         self.number_of_actions = len(Action)
         self.gamma = 0.99
-        self.final_epsilon = 0.0001
-        self.initial_epsilon = 0.1
-        self.number_of_iterations = 2000000
+        self.final_epsilon = 0.001
+        self.initial_epsilon = 0.8
+        self.number_of_iterations = 50000
         self.replay_memory_size = 10000
         self.minibatch_size = 32
 
@@ -66,10 +76,11 @@ def get_model_state(game):
     reward = torch.tensor([reward]).float()
     state = torch.cat((vision, hp, reward)).unsqueeze(0)
     state = torch.cat((state, state, state, state)).unsqueeze(0).float()
-    return state, reward, 1
+    return state, reward, 0
 
 
 def train(model, start):
+    model.train()
     if torch.cuda.is_available():  # put on GPU if CUDA is available
         model = model.cuda()
     # define Adam optimizer
@@ -109,18 +120,14 @@ def train(model, start):
         if torch.cuda.is_available():  # put on GPU if CUDA is available
             action = action.cuda()
         # epsilon greedy exploration
-        random_action = random.random() <= epsilon
-        action_index = [
-            torch.randint(
-                model.number_of_actions, torch.Size([]), dtype=torch.int)
-            if random_action else torch.argmax(output)
-        ][0]
+        use_teacher = random.random() <= epsilon
 
-        if torch.cuda.is_available():  # put on GPU if CUDA is available
-            action_index = action_index.cuda()
+        teacher_action_index = rulebase_teacher(game)
+        model_action_index = torch.argmax(output).item()
+        action_index = teacher_action_index if use_teacher else model_action_index
 
-        action[action_index] = 1
         # get next state and reward
+        game.update(set([Action(action_index)]))
         state_1, reward, terminal = get_model_state(game)
 
         action = action.unsqueeze(0)
@@ -169,11 +176,13 @@ def train(model, start):
         # returns a new Tensor, detached from the current graph, the result will never require gradient
         y_batch = y_batch.detach()
 
+        # TODO: Why model not being updated
         # calculate loss
         loss = criterion(q_value, y_batch)
 
         # do backward pass
         loss.backward()
+        # print("loss:", loss, q_value, y_batch)
         optimizer.step()
 
         # set state to be state_1
@@ -187,11 +196,16 @@ def train(model, start):
                 "pretrained_model/current_model_" + str(iteration) + ".pth")
 
         print(
-            "iteration: {}\telapsed time: {:0.2f}\tepsilon: {}\taction: {}\treward: {}\tQ max: {}"
+            "\riteration: {}\telapsed time: {:0.2f} epsilon: {:0.6f} action: {} reward: {:0.2f}\t Q max: {:0.4f} isT:{},TA{},MA{} output:{} {}"
             .format(iteration,
-                    time.time() - start, epsilon,
-                    action_index.cpu().detach().numpy(),
+                    time.time() - start, epsilon, action_index,
                     reward.numpy()[0][0],
-                    np.max(output.cpu().detach().numpy())),
-            end='\r')
+                    np.max(output.cpu().detach().numpy()),
+                    "T" if use_teacher else "F",
+                    teacher_action_index,
+                    model_action_index,
+                    model.conv1.weight,
+                    model.parameters,
+                    game.leben.get_status_str()),
+            end='')
         sys.stdout.flush()
