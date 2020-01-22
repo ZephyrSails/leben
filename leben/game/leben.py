@@ -28,7 +28,7 @@ class Leben(pygame.sprite.Sprite):
 
         # motion
         self.speed = 7
-        self.turn_speed = 5
+        self.turn_speed = 2
 
         # status
         self.id = 0
