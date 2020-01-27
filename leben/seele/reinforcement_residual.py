@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
 from game.game import Game, Action
 from seele.rulebase import rulebase_actions
 import numpy as np
@@ -13,7 +14,7 @@ VISION_RESOLUION = 126
 def reinforcement_player():
     model = NeuralNetwork()
     model.load_state_dict(
-        torch.load("pretrained_model/simplified/current_model_175000.pt"))
+        torch.load("pretrained_model/residual/current_model_175000.pt"))
     model.cpu()
     model.eval()
     game = Game()
@@ -47,14 +48,18 @@ def output_2_action_argmax_idx(output):
 
 
 def idx_2_action(index):
-    return Action.F if index == 0 else Action.L
+    return Action(index)
+
+
+def init_output():
+    return torch.tensor([[1 / len(Action)] * len(Action)])
 
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
 
-        self.number_of_actions = 2
+        self.number_of_actions = 4
         self.gamma = 0.99
         self.final_epsilon = 0.001
         self.initial_epsilon = 0.2
@@ -63,25 +68,22 @@ class NeuralNetwork(nn.Module):
         self.minibatch_size = 32
 
         self.conv1 = nn.Conv1d(4, 32, 8, 4)
-        self.relu1 = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv1d(32, 64, 4, 2)
-        self.relu2 = nn.ReLU(inplace=True)
         self.conv3 = nn.Conv1d(64, 64, 3, 1)
-        self.relu3 = nn.ReLU(inplace=True)
-        self.fc4 = nn.Linear(768, 128)
-        self.relu4 = nn.ReLU(inplace=True)
+        self.fc4 = nn.Linear(768, 124)
         self.fc5 = nn.Linear(128, self.number_of_actions)
 
-    def forward(self, state):
+    def forward(self, state, last_out):
         out = self.conv1(state)
-        out = self.relu1(out)
+        out = F.relu(out, inplace=True)
         out = self.conv2(out)
-        out = self.relu2(out)
+        out = F.relu(out, inplace=True)
         out = self.conv3(out)
-        out = self.relu3(out)
+        out = F.relu(out, inplace=True)
         out = out.view(out.size()[0], -1)
         out = self.fc4(out)
-        out = self.relu4(out)
+        out = F.relu(out, inplace=True)
+        out = torch.cat((out, last_out), 1)
         out = self.fc5(out)
 
         return out
@@ -128,13 +130,17 @@ def train(model):
     epsilon_decrements = np.linspace(model.initial_epsilon,
                                      model.final_epsilon,
                                      model.number_of_iterations)
-
+    output = init_output()
+    if torch.cuda.is_available():
+        output = output.cuda()
     # main infinite loop
     while iteration < model.number_of_iterations:
         if torch.cuda.is_available():  # put on GPU if CUDA is available
             state = state.cuda()
         # get output from the neural network
-        output = model(state)[0]
+        last_output = output.clone().detach()
+        output = model(state, last_output)
+        output_val = output[0]
         # initialize action
         action = torch.zeros([model.number_of_actions], dtype=torch.float32)
         if torch.cuda.is_available():  # put on GPU if CUDA is available
@@ -145,7 +151,7 @@ def train(model):
 
         # teacher_action_index = rulebase_teacher(game)
         teacher_action_index = random_teacher(model)
-        model_action_index = output_2_action_idx(output)
+        model_action_index = output_2_action_idx(output_val)
         action_index = teacher_action_index if use_teacher else model_action_index
 
         action[action_index] = 1
@@ -158,7 +164,8 @@ def train(model):
                                            dtype=np.float32)).unsqueeze(0)
 
         # save transition to replay memory
-        replay_memory.append((state, action, reward, state_1, terminal))
+        replay_memory.append(
+            (state, action, reward, state_1, terminal, last_output, output))
         # if replay memory is full, remove the oldest transition
         if len(replay_memory) > model.replay_memory_size:
             replay_memory.pop(0)
@@ -174,15 +181,20 @@ def train(model):
         action_batch = torch.cat(tuple(d[1] for d in minibatch))
         reward_batch = torch.cat(tuple(d[2] for d in minibatch))
         state_1_batch = torch.cat(tuple(d[3] for d in minibatch))
+        last_output_batch = torch.cat(tuple(d[5] for d in minibatch))
+        next_output_batch = torch.cat(tuple(d[6] for d in minibatch))
 
         if torch.cuda.is_available():  # put on GPU if CUDA is available
             state_batch = state_batch.cuda()
             action_batch = action_batch.cuda()
             reward_batch = reward_batch.cuda()
             state_1_batch = state_1_batch.cuda()
+            last_output_batch = last_output_batch.cuda()
+            next_output_batch = next_output_batch.cuda()
 
         # get output for the next state
-        output_1_batch = model(state_1_batch)
+        # TODO what the hack? why this work?
+        output_1_batch = model(state_1_batch, next_output_batch)
 
         # set y_j to r_j for terminal state, otherwise to r_j + gamma*max(Q)
         y_batch = torch.cat(
@@ -191,7 +203,9 @@ def train(model):
                   for i in range(len(minibatch))))
 
         # extract Q-value
-        q_value = torch.sum(model(state_batch) * action_batch, dim=1)
+        q_value = torch.sum(model(state_batch, last_output_batch) *
+                            action_batch,
+                            dim=1)
 
         # PyTorch accumulates gradients by default, so they need to be reset in each pass
         optimizer.zero_grad()
@@ -216,17 +230,17 @@ def train(model):
         if iteration % 25000 == 0:
             torch.save(
                 model.state_dict(),
-                "pretrained_model/simplified/current_model_" + str(iteration) +
+                "pretrained_model/residual/current_model_" + str(iteration) +
                 ".pt")
-        dist = output_2_distribution(output)
+        dist = output_2_distribution(output_val)
         print(
-            "\riteration: {}\telapsed time: {:0.2f} epsilon: {:0.6f} action: {} reward: {:0.2f}\t Q max: {:0.4f} isT:{},TA{},MA{} F:{:0.2f},L:{:0.2f} {}"
+            "\riter: {} time: {:0.2f} epsilon: {:0.6f} action: {} reward: {:0.2f} Qmax: {:0.4f} isT:{},TA{},MA{} F:{:0.2f},B:{:0.2f},L:{:0.2f},R:{:0.2f} {}"
             .format(iteration,
                     time.time() - start, epsilon, action_index,
                     reward.numpy()[0][0],
-                    np.max(output.cpu().detach().numpy()),
+                    np.max(output_val.cpu().detach().numpy()),
                     "T" if use_teacher else "F", teacher_action_index,
-                    model_action_index, dist[0], dist[1],
+                    model_action_index, dist[0], dist[1], dist[2], dist[3],
                     game.leben.get_status_str()),
             end='')
         sys.stdout.flush()

@@ -203,9 +203,9 @@ class Leben(pygame.sprite.Sprite):
         if Action.F in actions:
             x_next += self.x_speed
             y_next += self.y_speed
-        # if Action.B in actions:
-        #     x_next -= self.x_speed
-        #     y_next -= self.y_speed
+        if Action.B in actions:
+            x_next -= self.x_speed
+            y_next -= self.y_speed
         x_next = max(0, min(self.SCREEN_WIDTH, x_next))
         y_next = max(0, min(self.SCREEN_HEIGHT, y_next))
 
@@ -216,8 +216,8 @@ class Leben(pygame.sprite.Sprite):
         self.rect.move_ip(dx, dy)
         if Action.L in actions:
             self.set_direction(self.dir_degree - self.turn_speed)
-        # if Action.R in actions:
-        #     self.set_direction(self.dir_degree + self.turn_speed)
+        if Action.R in actions:
+            self.set_direction(self.dir_degree + self.turn_speed)
 
         self.update_vision()
 

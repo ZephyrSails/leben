@@ -9,7 +9,7 @@ class Pflanze(pygame.sprite.Sprite):
         self.y = random.randint(0, Y)
 
         self.radius = random.randint(5, 10)
-        self.value = self.radius / 3
+        self.value = self.radius
         self.color = (random.randint(0, 255), random.randint(0, 255),
                       random.randint(0, 255))
         self.bg_color = (0, 0, 0)
