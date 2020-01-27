@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+# Code sample copied from https://github.com/nevenp/dqn_flappy_bird
+
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
