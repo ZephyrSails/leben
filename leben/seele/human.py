@@ -26,4 +26,3 @@ def human_player():
     game = Game()
     while game.running:
         game.update(pressed_keys_to_actions())
-        print(game.get_state())

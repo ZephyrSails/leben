@@ -20,8 +20,8 @@ def evaluate(args):
     elif args.seele == "rulebase":
         from seele.rulebase import rulebase_player
         rulebase_player()
-    elif args.seele == "reinforcement":
-        from seele.reinforcement import reinforcement_player
+    elif args.seele == "reinforcement_simplified":
+        from seele.reinforcement_simplified import reinforcement_player
         reinforcement_player()
 
 if __name__ == "__main__":
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if args.mode == "eval":
         evaluate(args)
     if args.mode == "train":
-        from seele.reinforcement import train, NeuralNetwork
+        from seele.reinforcement_simplified import train, NeuralNetwork
         import time
         model = NeuralNetwork()
         train(model, time.time())

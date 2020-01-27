@@ -140,8 +140,9 @@ class Leben(pygame.sprite.Sprite):
         pygame.draw.polygon(self.game_screen, self.bg_color, points)
 
     def print(self):
-        print("[{:.2f}, {:.2f}, {:.2f}]".format(self.x, self.y,
-                                                self.dir_degree))
+        pass
+        # print("\r[{:.2f}, {:.2f}, {:.2f}]".format(self.x, self.y,
+        #                                         self.dir_degree))
 
     def update_vision(self):
         self.objs_in_view = []
@@ -172,11 +173,12 @@ class Leben(pygame.sprite.Sprite):
             self.objs_in_view.sort(key=lambda p: -p[3])
 
     def get_1d_vision(self, width):
-        radians_width = self.dir_r_radians - self.dir_l_radians
-
+        radians_width = abs(self.dir_r_radians - self.dir_l_radians)
         vision = [self.bg_color] * width
 
         for l_radians, r_radians, color, R in self.objs_in_view:
+            if l_radians > r_radians:
+                l_radians -= 2 * math.pi
             left_idx = 0 if l_radians < self.dir_l_radians else int(
                 ((l_radians - self.dir_l_radians) / radians_width) * width)
             right_idx = width if r_radians > self.dir_r_radians else int(
@@ -201,9 +203,9 @@ class Leben(pygame.sprite.Sprite):
         if Action.F in actions:
             x_next += self.x_speed
             y_next += self.y_speed
-        if Action.B in actions:
-            x_next -= self.x_speed
-            y_next -= self.y_speed
+        # if Action.B in actions:
+        #     x_next -= self.x_speed
+        #     y_next -= self.y_speed
         x_next = max(0, min(self.SCREEN_WIDTH, x_next))
         y_next = max(0, min(self.SCREEN_HEIGHT, y_next))
 
@@ -214,8 +216,8 @@ class Leben(pygame.sprite.Sprite):
         self.rect.move_ip(dx, dy)
         if Action.L in actions:
             self.set_direction(self.dir_degree - self.turn_speed)
-        if Action.R in actions:
-            self.set_direction(self.dir_degree + self.turn_speed)
+        # if Action.R in actions:
+        #     self.set_direction(self.dir_degree + self.turn_speed)
 
         self.update_vision()
 

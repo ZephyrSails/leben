@@ -1,8 +1,6 @@
 import torch
 from torch import nn
 
-#
-
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -60,15 +58,16 @@ def train(model, start):
     image_data, reward, terminal = game_state.frame_step(action)
     image_data = resize_and_bgr2gray(image_data)
     image_data = image_to_tensor(image_data)
-    state = torch.cat((image_data, image_data, image_data,
-                       image_data)).unsqueeze(0)
+    state = torch.cat(
+        (image_data, image_data, image_data, image_data)).unsqueeze(0)
 
     # initialize epsilon value
     epsilon = model.initial_epsilon
     iteration = 0
 
-    epsilon_decrements = np.linspace(
-        model.initial_epsilon, model.final_epsilon, model.number_of_iterations)
+    epsilon_decrements = np.linspace(model.initial_epsilon,
+                                     model.final_epsilon,
+                                     model.number_of_iterations)
 
     # main infinite loop
     while iteration < model.number_of_iterations:
@@ -99,8 +98,8 @@ def train(model, start):
         image_data_1, reward, terminal = game_state.frame_step(action)
         image_data_1 = resize_and_bgr2gray(image_data_1)
         image_data_1 = image_to_tensor(image_data_1)
-        state_1 = torch.cat((state.squeeze(0)[1:, :, :],
-                             image_data_1)).unsqueeze(0)
+        state_1 = torch.cat(
+            (state.squeeze(0)[1:, :, :], image_data_1)).unsqueeze(0)
 
         action = action.unsqueeze(0)
         reward = torch.from_numpy(np.array([reward],

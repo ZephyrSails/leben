@@ -11,14 +11,16 @@ VISION_RESOLUION = 126
 
 
 def reinforcement_player():
-    model = torch.load("pretrained_model/current_model_50000.pth")
-    model = model.cpu()
+    model = NeuralNetwork()
+    model.load_state_dict(
+        torch.load("pretrained_model/simplified/current_model_175000.pt"))
+    model.cpu()
     model.eval()
     game = Game()
     while game.running:
         state, _reward, _terminal = get_model_state(game)
         output = model(state)
-        game.update(set([Action(output_2_action(output))]))
+        game.update(set([idx_2_action(output_2_action_argmax_idx(output))]))
 
 
 def rulebase_teacher(game):
@@ -35,20 +37,28 @@ def output_2_distribution(output):
     return nn.functional.softmax(output, dim=0)
 
 
-def output_2_action(output):
+def output_2_action_idx(output):
     distribution = output_2_distribution(output)
     return torch.multinomial(distribution, 1).item()
+
+
+def output_2_action_argmax_idx(output):
+    return torch.torch.argmax(output).item()
+
+
+def idx_2_action(index):
+    return Action.F if index == 0 else Action.L
 
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
 
-        self.number_of_actions = len(Action)
+        self.number_of_actions = 2
         self.gamma = 0.99
         self.final_epsilon = 0.001
         self.initial_epsilon = 0.2
-        self.number_of_iterations = 50000
+        self.number_of_iterations = 5000000
         self.replay_memory_size = 10000
         self.minibatch_size = 32
 
@@ -132,13 +142,14 @@ def train(model, start):
         # epsilon greedy exploration
         use_teacher = random.random() <= epsilon
 
-        teacher_action_index = rulebase_teacher(game)
-        model_action_index = output_2_action(output)
+        # teacher_action_index = rulebase_teacher(game)
+        teacher_action_index = random_teacher(model)
+        model_action_index = output_2_action_idx(output)
         action_index = teacher_action_index if use_teacher else model_action_index
 
         action[action_index] = 1
         # get next state and reward
-        game.update(set([Action(action_index)]))
+        game.update(set([idx_2_action(action_index)]))
         state_1, reward, terminal = get_model_state(game)
 
         action = action.unsqueeze(0)
@@ -203,17 +214,18 @@ def train(model, start):
 
         if iteration % 25000 == 0:
             torch.save(
-                model,
-                "pretrained_model/current_model_" + str(iteration) + ".pth")
+                model.state_dict(),
+                "pretrained_model/simplified/current_model_" + str(iteration) +
+                ".pt")
         dist = output_2_distribution(output)
         print(
-            "\riteration: {}\telapsed time: {:0.2f} epsilon: {:0.6f} action: {} reward: {:0.2f}\t Q max: {:0.4f} isT:{},TA{},MA{} F:{:0.2f},B:{:0.2f},L:{:0.2f},R:{:0.2f} {}"
+            "\riteration: {}\telapsed time: {:0.2f} epsilon: {:0.6f} action: {} reward: {:0.2f}\t Q max: {:0.4f} isT:{},TA{},MA{} F:{:0.2f},L:{:0.2f} {}"
             .format(iteration,
                     time.time() - start, epsilon, action_index,
                     reward.numpy()[0][0],
                     np.max(output.cpu().detach().numpy()),
                     "T" if use_teacher else "F", teacher_action_index,
-                    model_action_index, dist[0], dist[1], dist[2], dist[3],
+                    model_action_index, dist[0], dist[1],
                     game.leben.get_status_str()),
             end='')
         sys.stdout.flush()
