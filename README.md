@@ -39,8 +39,8 @@ Sound effect extracted by Lev_Astov from reddit.
 | 1      | Left/Right | R_Shift | R_Ctrl |
 
 ----
-### Dev log:
-Jan 26:
+## Dev log:
+### Jan 26:
 * Tried Reinforcement learning on simplified task:
   * No death penalty.
   * Only keeps two actions: Forward and Turn Left. (Otherwise, the system can easily stuck into deadloop like keeps going back and forth, or keep turning left and right, making it hard to train).
